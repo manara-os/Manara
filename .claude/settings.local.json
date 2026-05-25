@@ -240,7 +240,11 @@
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npm install --workspace=apps/mobile-pm --no-audit --no-fund)",
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ timeout 30 npx expo start --port 8083 --no-dev)",
       "Bash(curl -s -o /dev/null -w \"Metro on 8083: %{http_code}\\\\n\" http://localhost:8083/)",
-      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ node gen_handbook_v2.js)"
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ node gen_handbook_v2.js)",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx expo start --port 8082 --offline)",
+      "Bash(echo \"Started mobile-owner \\(PID $!\\)\")",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx expo start --port 8084 --offline)",
+      "Bash(echo \"Started mobile-vendor \\(PID $!\\)\")"
     ]
   }
 }
