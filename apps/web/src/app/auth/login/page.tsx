@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/lib/api';
@@ -9,12 +9,41 @@ import { toast } from 'sonner';
 
 type Step = 'phone' | 'otp';
 
+// Outer wrapper provides Suspense boundary required by useSearchParams in Next.js 14
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginShell />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginShell() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-white to-orange-50 px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-600 shadow-lg mb-4">
+          <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" />
+          </svg>
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Manara OS</h1>
+        <p className="text-sm text-gray-500 mt-1">Loading…</p>
+      </div>
+    </div>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
 
   const [step, setStep] = useState<Step>('phone');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(() => {
+    const p = searchParams.get('phone') ?? '';
+    return p ? `+971${p}` : '';
+  });
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 

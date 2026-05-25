@@ -33,12 +33,14 @@ interface AuthState {
   workspaces: Workspace[];
   isAuthenticated: boolean;
   isLoading: boolean;
+  hasHydrated: boolean;
 
   // Actions
   setAuth: (data: { user: User; accessToken: string; refreshToken: string; workspaces: Workspace[] }) => void;
   setCurrentWorkspace: (workspace: Workspace) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
+  setHasHydrated: (hydrated: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -51,6 +53,9 @@ export const useAuthStore = create<AuthState>()(
       workspaces: [],
       isAuthenticated: false,
       isLoading: false,
+      hasHydrated: false,
+
+      setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
 
       setAuth: ({ user, accessToken, refreshToken, workspaces }) => {
         localStorage.setItem('manara_access_token', accessToken);
@@ -108,6 +113,9 @@ export const useAuthStore = create<AuthState>()(
         workspaces: state.workspaces,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

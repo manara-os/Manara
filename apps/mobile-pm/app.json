@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Manara PM",
+    "slug": "manara-pm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "manarapm",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ae.manaraos.pm"
+    },
+    "android": {
+      "package": "ae.manaraos.pm"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "apiUrl": "http://192.168.1.9:3001/api/v1",
+      "appVariant": "pm-staff"
+    },
+    "newArchEnabled": true
+  }
+}

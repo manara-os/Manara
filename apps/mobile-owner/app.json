@@ -40,7 +40,7 @@
       "eas": {
         "projectId": "73b3722b-2fa2-46c1-b182-9c57e9a6db72"
       },
-      "apiUrl": "https://api.manaraos.ae/api/v1",
+      "apiUrl": "http://192.168.1.9:3001/api/v1",
       "appVariant": "owner"
     },
     "experiments": {
