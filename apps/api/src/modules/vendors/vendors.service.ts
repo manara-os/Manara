@@ -88,12 +88,12 @@ export class VendorsService {
 
     const [total, resolved, overSla] = await Promise.all([
       this.prisma.ticket.count({ where: { workspaceId, assignedVendorId: vendorId } }),
-      this.prisma.ticket.count({ where: { workspaceId, assignedVendorId: vendorId, status: 'RESOLVED' } }),
+      this.prisma.ticket.count({ where: { workspaceId, assignedVendorId: vendorId, status: 'COMPLETED' } }),
       this.prisma.ticket.count({
         where: {
           workspaceId,
           assignedVendorId: vendorId,
-          status: 'RESOLVED',
+          status: 'COMPLETED',
           resolvedAt: { not: null },
         },
       }),

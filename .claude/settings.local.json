@@ -244,7 +244,13 @@
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx expo start --port 8082 --offline)",
       "Bash(echo \"Started mobile-owner \\(PID $!\\)\")",
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx expo start --port 8084 --offline)",
-      "Bash(echo \"Started mobile-vendor \\(PID $!\\)\")"
+      "Bash(echo \"Started mobile-vendor \\(PID $!\\)\")",
+      "Bash(curl -s -o /dev/null -w \"Login page: %{http_code}\\\\n\" http://localhost:3000/auth/login)",
+      "Bash(curl -s -o /dev/null -w \"Demo page: %{http_code}\\\\n\" http://localhost:3000/demo)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); a=d.get\\('data',d\\); print\\('TOKEN:', a.get\\('accessToken',''\\)[:40] + '...'\\); print\\('WS_ID:', a.get\\('workspaces',[{}]\\)[0].get\\('workspaceId',''\\)\\)\")",
+      "Bash(curl -s -X GET \"http://localhost:3001/api/v1/properties/00000000-0000-0000-0001-000000000003\" -H \"Authorization: Bearer $\\(curl -s -X POST http://localhost:3001/api/v1/auth/verify-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+971501000002\",\"code\":\"123456\"}')",
+      "Bash(python3 -c 'import json,sys;d=json.load\\(sys.stdin\\);print\\(\"Status: 200 OK\" if d.get\\(\"success\"\\) else d.get\\(\"message\",\"unknown\"\\)[:200]\\)')",
+      "Bash(curl -s -o /dev/null -w \"API: %{http_code}\\\\n\" http://localhost:3001/api/v1/health)"
     ]
   }
 }

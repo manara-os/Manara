@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { leasesApi, integrationsApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -319,14 +320,26 @@ export default function LeaseDetailPage() {
       <div className="flex items-start justify-between">
         <div>
           <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-700 mb-2">← Back to Leases</button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-lg font-semibold text-gray-900">
-              {lease.tenant?.fullName} — {lease.unit?.unitNumber}
+              <Link href={`/tenants/${lease.tenantId ?? lease.tenant?.id}`} className="hover:text-amber-600 hover:underline">
+                {lease.tenant?.fullName}
+              </Link>
+              {' — '}
+              <Link href={`/units/${lease.unitId ?? lease.unit?.id}`} className="hover:text-amber-600 hover:underline">
+                {lease.unit?.unitNumber}
+              </Link>
             </h1>
             <Badge variant={STATUS_COLORS[lease.status] ?? 'secondary'}>{lease.status}</Badge>
             {lease.leaseRef && <span className="text-xs text-gray-400 font-mono">{lease.leaseRef}</span>}
           </div>
-          <p className="text-gray-500 text-sm mt-1">{lease.unit?.property?.name} · {lease.ejariNumber ?? 'Ejari Pending'}</p>
+          <p className="text-gray-500 text-sm mt-1">
+            <Link href={`/properties/${lease.unit?.propertyId ?? lease.unit?.property?.id}`} className="hover:text-amber-600 hover:underline">
+              {lease.unit?.property?.name}
+            </Link>
+            {' · '}
+            {lease.ejariNumber ?? 'Ejari Pending'}
+          </p>
         </div>
         <div className="flex gap-2">
           {lease.status === 'ACTIVE' && !lease.ejariNumber && (
@@ -377,9 +390,25 @@ export default function LeaseDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Lease Terms</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between border-b border-gray-50 pb-2">
+                <span className="text-gray-400">Tenant</span>
+                <Link
+                  href={`/tenants/${lease.tenantId ?? lease.tenant?.id}`}
+                  className="font-medium text-amber-600 hover:underline"
+                >
+                  {lease.tenant?.fullName}
+                </Link>
+              </div>
+              <div className="flex justify-between border-b border-gray-50 pb-2">
+                <span className="text-gray-400">Unit</span>
+                <Link
+                  href={`/units/${lease.unitId ?? lease.unit?.id}`}
+                  className="font-medium text-amber-600 hover:underline text-right"
+                >
+                  {lease.unit?.unitNumber} — {lease.unit?.property?.name}
+                </Link>
+              </div>
               {[
-                ['Tenant', lease.tenant?.fullName],
-                ['Unit', `${lease.unit?.unitNumber} — ${lease.unit?.property?.name}`],
                 ['Start Date', new Date(lease.startDate).toLocaleDateString('en-AE')],
                 ['End Date', new Date(lease.endDate).toLocaleDateString('en-AE')],
                 ['Duration', `${Math.ceil((new Date(lease.endDate).getTime() - new Date(lease.startDate).getTime()) / (365.25 * 86400000))} year(s)`],

@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { vendorsApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -189,10 +190,26 @@ export default function VendorDetailPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {vendor.tickets.slice(0, 10).map((t: any) => (
-                  <tr key={t.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={t.id}
+                    className="hover:bg-amber-50 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/tickets/${t.id}`)}
+                  >
                     <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{t.ticketRef}</td>
                     <td className="px-4 py-2.5 text-gray-900 font-medium">{t.title}</td>
-                    <td className="px-4 py-2.5 text-gray-500 text-xs">{t.unit?.unitNumber}</td>
+                    <td className="px-4 py-2.5 text-xs">
+                      {t.unit ? (
+                        <Link
+                          href={`/units/${t.unit.id ?? t.unitId}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-amber-600 hover:underline"
+                        >
+                          {t.unit.unitNumber}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-500">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5">
                       <Badge variant={t.status === 'COMPLETED' ? 'success' : t.status === 'OPEN' ? 'warning' : 'secondary'} className="text-xs">
                         {t.status}

@@ -94,25 +94,26 @@ export class PropertiesService {
               take: 1,
               orderBy: { startDate: 'desc' },
             },
-            _count: { select: { tickets: { where: { status: { notIn: ['CLOSED', 'CANCELLED'] } } } } },
           },
           orderBy: { unitNumber: 'asc' },
-        },
-        documents: {
-          where: { deletedAt: null },
-          orderBy: { createdAt: 'desc' },
         },
         _count: {
           select: {
             units: true,
-            tickets: true,
           },
         },
       },
     });
 
     if (!property) throw new NotFoundException('Property not found');
-    return property;
+
+    // Fetch related documents separately (polymorphic via entityType/entityId)
+    const documents = await this.prisma.document.findMany({
+      where: { workspaceId, entityType: 'PROPERTY', entityId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return { ...property, documents };
   }
 
   async create(workspaceId: string, dto: CreatePropertyDto, createdBy: string) {

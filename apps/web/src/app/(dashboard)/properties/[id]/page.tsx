@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { propertiesApi, unitsApi, ticketsApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, User2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 const OCCUPANCY_COLORS: Record<string, 'success' | 'warning' | 'secondary'> = {
@@ -273,14 +274,27 @@ export default function PropertyDetailPage() {
       {showEditModal && <EditPropertyModal prop={prop} onClose={() => setShowEditModal(false)} />}
       {showAddUnitModal && <AddUnitModal propertyId={id} onClose={() => setShowAddUnitModal(false)} />}
 
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1 text-sm text-gray-500">
+        <Link href="/properties" className="hover:text-amber-600 hover:underline">Properties</Link>
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-gray-700 font-medium">{prop.name}</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-700 mb-2 flex items-center gap-1">
-            ← Back to Properties
-          </button>
           <h1 className="text-lg font-semibold text-gray-900">{prop.name}</h1>
           <p className="text-gray-500 mt-1">{prop.address}, {prop.city}</p>
+          {prop.owner && (
+            <Link
+              href={`/owners/${prop.owner.id ?? prop.ownerId}`}
+              className="inline-flex items-center gap-1.5 mt-2 text-xs text-amber-600 hover:text-amber-700 hover:underline"
+            >
+              <User2 className="w-3.5 h-3.5" />
+              Owned by {prop.owner.fullName ?? prop.owner.name ?? 'Owner'}
+            </Link>
+          )}
         </div>
         <div className="flex gap-2">
           <Badge variant="outline">{prop.type?.replace(/_/g, ' ')}</Badge>
@@ -376,25 +390,36 @@ export default function PropertyDetailPage() {
               {units.length === 0 ? (
                 <p className="text-gray-400 col-span-3 py-8 text-center">No units found for this property.</p>
               ) : (
-                units.map((unit: any) => (
-                  <Card key={unit.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-900">{unit.unitNumber}</span>
-                        <Badge variant={OCCUPANCY_COLORS[unit.occupancyStatus] ?? 'secondary'}>
-                          {unit.occupancyStatus}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-500 space-y-1">
-                        <p>{unit.type?.replace(/_/g, ' ')} · {unit.bedroomCount > 0 ? `${unit.bedroomCount}BR ` : ''}{unit.bathroomCount > 0 ? `${unit.bathroomCount}BA` : ''}</p>
-                        <p>{unit.areaSqft ? `${Number(unit.areaSqft).toLocaleString()} sqft` : ''}</p>
-                        {unit.annualRent && (
-                          <p className="text-gray-700 font-medium">AED {Number(unit.annualRent).toLocaleString()}/yr</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                units.map((unit: any) => {
+                  const activeLease = unit.leases?.find((l: any) => l.status === 'ACTIVE');
+                  return (
+                    <Link key={unit.id} href={`/units/${unit.id}`} className="block">
+                      <Card className="hover:shadow-md hover:border-amber-300 transition-all cursor-pointer h-full">
+                        <CardContent className="pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-gray-900 group-hover:text-amber-600">{unit.unitNumber}</span>
+                            <Badge variant={OCCUPANCY_COLORS[unit.occupancyStatus] ?? 'secondary'}>
+                              {unit.occupancyStatus}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-gray-500 space-y-1">
+                            <p>{unit.type?.replace(/_/g, ' ')} · {unit.bedroomCount > 0 ? `${unit.bedroomCount}BR ` : ''}{unit.bathroomCount > 0 ? `${unit.bathroomCount}BA` : ''}</p>
+                            <p>{unit.areaSqft ? `${Number(unit.areaSqft).toLocaleString()} sqft` : ''}</p>
+                            {unit.annualRent && (
+                              <p className="text-gray-700 font-medium">AED {Number(unit.annualRent).toLocaleString()}/yr</p>
+                            )}
+                            {activeLease?.tenant && (
+                              <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5 text-xs">
+                                <User2 className="w-3 h-3 text-amber-600" />
+                                <span className="text-amber-700 font-medium truncate">{activeLease.tenant.fullName}</span>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })
               )}
             </div>
           </div>

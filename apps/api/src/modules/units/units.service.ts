@@ -37,7 +37,7 @@ export class UnitsService {
           include: { tenant: { select: { fullName: true, phone: true, email: true } } },
         },
         tickets: {
-          where: { status: { notIn: ['RESOLVED', 'CLOSED'] } },
+          where: { status: { notIn: ['COMPLETED', 'CLOSED', 'CANCELLED'] } },
           orderBy: { createdAt: 'desc' },
           take: 10,
         },

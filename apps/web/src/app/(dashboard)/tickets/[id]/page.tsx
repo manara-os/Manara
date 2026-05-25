@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { ticketsApi, vendorsApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -121,8 +122,22 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-sm font-semibold text-gray-700">Location</CardTitle></CardHeader>
             <CardContent className="space-y-1">
-              <p className="font-medium">{ticket.unit?.unitNumber}</p>
-              <p className="text-gray-500 text-sm">{ticket.unit?.property?.name}</p>
+              <Link
+                href={`/units/${ticket.unit?.id ?? ticket.unitId}`}
+                className="font-medium text-amber-600 hover:underline inline-block"
+              >
+                Unit {ticket.unit?.unitNumber}
+              </Link>
+              {ticket.unit?.property && (
+                <p>
+                  <Link
+                    href={`/properties/${ticket.unit.property.id ?? ticket.unit.propertyId}`}
+                    className="text-amber-600 hover:underline text-sm"
+                  >
+                    {ticket.unit.property.name}
+                  </Link>
+                </p>
+              )}
               {ticket.unit?.property?.address && (
                 <p className="text-gray-400 text-xs">{ticket.unit.property.address}</p>
               )}
@@ -165,10 +180,12 @@ export default function TicketDetailPage() {
             <CardHeader><CardTitle className="text-sm font-semibold text-gray-700">Assignment</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {ticket.vendor ? (
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{ticket.vendor.companyName}</p>
+                <Link href={`/vendors/${ticket.vendor.id ?? ticket.vendorId}`} className="block group">
+                  <p className="text-sm font-medium text-gray-900 group-hover:text-amber-600 group-hover:underline">
+                    {ticket.vendor.companyName}
+                  </p>
                   <p className="text-xs text-gray-400">{ticket.vendor.contactName} · {ticket.vendor.phone}</p>
-                </div>
+                </Link>
               ) : (
                 <p className="text-sm text-gray-400">Not yet assigned</p>
               )}
@@ -200,15 +217,23 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-sm font-semibold text-gray-700">Details</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              {[
-                ['Category', ticket.category?.replace(/_/g, ' ')],
-                ['Reported By', ticket.tenant?.fullName ?? 'System'],
-              ].map(([label, value]) => (
-                <div key={label} className="flex justify-between">
-                  <span className="text-gray-400">{label}</span>
-                  <span className="font-medium text-gray-700">{value ?? '—'}</span>
-                </div>
-              ))}
+              <div className="flex justify-between">
+                <span className="text-gray-400">Category</span>
+                <span className="font-medium text-gray-700">{ticket.category?.replace(/_/g, ' ') ?? '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Reported By</span>
+                {ticket.tenant ? (
+                  <Link
+                    href={`/tenants/${ticket.tenant.id ?? ticket.tenantId}`}
+                    className="font-medium text-amber-600 hover:underline"
+                  >
+                    {ticket.tenant.fullName}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-gray-700">System</span>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

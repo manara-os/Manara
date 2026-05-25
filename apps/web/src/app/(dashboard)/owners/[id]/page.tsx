@@ -217,11 +217,27 @@ export default function OwnerDetailPage() {
                       const lease = unit.leases?.[0];
                       return (
                         <tr key={unit.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="py-2.5 text-gray-600 text-xs">{prop.name}</td>
-                          <td className="py-2.5 font-medium text-gray-900">{unit.unitNumber}</td>
+                          <td className="py-2.5 text-gray-600 text-xs">
+                            <Link href={`/properties/${prop.id}`} className="text-amber-600 hover:underline">
+                              {prop.name}
+                            </Link>
+                          </td>
+                          <td className="py-2.5 font-medium text-gray-900">
+                            <Link href={`/units/${unit.id}`} className="text-amber-600 hover:underline">
+                              {unit.unitNumber}
+                            </Link>
+                          </td>
                           <td className="py-2.5 text-gray-500 text-xs">{unit.type?.replace('_', ' ')}</td>
                           <td className="py-2.5 text-gray-900">AED {Number(unit.annualRent ?? 0).toLocaleString()}</td>
-                          <td className="py-2.5 text-gray-600 text-xs">{lease?.tenant?.fullName ?? '—'}</td>
+                          <td className="py-2.5 text-gray-600 text-xs">
+                            {lease?.tenant ? (
+                              <Link href={`/tenants/${lease.tenantId ?? lease.tenant.id}`} className="text-amber-600 hover:underline font-medium">
+                                {lease.tenant.fullName}
+                              </Link>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
                           <td className="py-2.5">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                               unit.occupancyStatus === 'OCCUPIED' ? 'bg-green-100 text-green-700' :
