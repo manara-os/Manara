@@ -1,0 +1,105 @@
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { FinanceService } from './finance.service';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { WorkspaceGuard } from '../../auth/guards/workspace.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRole, ChequeStatus } from '@prisma/client';
+
+@ApiTags('Finance')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, WorkspaceGuard, RolesGuard)
+@Controller('finance')
+export class FinanceController {
+  constructor(private readonly financeService: FinanceService) {}
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Get financial dashboard summary' })
+  getSummary(@Request() req: any) {
+    return this.financeService.getDashboardSummary(req.workspaceId);
+  }
+
+  @Get('collections')
+  @ApiOperation({ summary: 'List rent collections' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  getCollections(@Request() req: any, @Query('leaseId') leaseId?: string) {
+    return this.financeService.getCollections(req.workspaceId, { leaseId });
+  }
+
+  @Post('collections')
+  @ApiOperation({ summary: 'Record a rent payment' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  recordCollection(@Request() req: any, @Body() dto: any) {
+    return this.financeService.recordCollection(req.workspaceId, dto);
+  }
+
+  @Get('cheques')
+  @ApiOperation({ summary: 'List PDC cheques' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  getCheques(
+    @Request() req: any,
+    @Query('leaseId') leaseId?: string,
+    @Query('status') status?: ChequeStatus,
+  ) {
+    return this.financeService.getCheques(req.workspaceId, { leaseId, status });
+  }
+
+  @Patch('cheques/:id/status')
+  @ApiOperation({ summary: 'Update PDC cheque status (cleared, bounced, cancelled)' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  updateChequeStatus(
+    @Param('id') id: string,
+    @Body('status') status: ChequeStatus,
+    @Body('bouncedReason') bouncedReason?: string,
+  ) {
+    return this.financeService.updateChequeStatus(id, status, bouncedReason);
+  }
+
+  @Get('overdue')
+  @ApiOperation({ summary: 'Get all overdue rent cheques' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  getOverdue(@Request() req: any) {
+    return this.financeService.getOverdueRent(req.workspaceId);
+  }
+
+  @Get('expenses')
+  @ApiOperation({ summary: 'List property expenses' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.OWNER)
+  getExpenses(
+    @Request() req: any,
+    @Query('propertyId') propertyId?: string,
+    @Query('unitId') unitId?: string,
+  ) {
+    return this.financeService.getExpenses(req.workspaceId, { propertyId, unitId });
+  }
+
+  @Post('expenses')
+  @ApiOperation({ summary: 'Record a property expense' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  createExpense(@Request() req: any, @Body() dto: any) {
+    return this.financeService.createExpense(req.workspaceId, dto);
+  }
+
+  @Get('owner-soa/:ownerId')
+  @ApiOperation({ summary: 'Get owner statement of account for a period (YYYY-MM)' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.OWNER)
+  getOwnerSoa(
+    @Request() req: any,
+    @Param('ownerId') ownerId: string,
+    @Query('period') period: string,
+  ) {
+    return this.financeService.getOwnerSoa(req.workspaceId, ownerId, period ?? `${new Date().getFullYear()}-${new Date().getMonth() + 1}`);
+  }
+
+  @Get('commissions')
+  @ApiOperation({ summary: 'List commissions' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)
+  listCommissions(
+    @Request() req: any,
+    @Query('status') status?: string,
+    @Query('leaseId') leaseId?: string,
+  ) {
+    return this.financeService.listCommissions(req.workspaceId, { status, leaseId });
+  }
+}

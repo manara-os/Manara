@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:$PATH npm run dev"],
+      "cwd": "/Users/amit/Desktop/Property Management flows/Manara OS Claude Code/apps/web",
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}

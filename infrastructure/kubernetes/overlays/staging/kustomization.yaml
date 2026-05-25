@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+  - ../../base
+
+namePrefix: "staging-"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: manara-api
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: manara-web
+
+configMapGenerator:
+  - name: manara-api-config
+    behavior: merge
+    literals:
+      - NODE_ENV=staging
+      - EJARI_MOCK_MODE=true
+      - LOG_LEVEL=debug
+  - name: manara-web-config
+    behavior: merge
+    literals:
+      - NEXT_PUBLIC_API_URL=https://api-staging.manaraos.ae/api/v1
+
+images:
+  - name: registry.manaraos.ae/manara-api
+    newTag: "$(IMAGE_TAG)"
+  - name: registry.manaraos.ae/manara-web
+    newTag: "$(IMAGE_TAG)"

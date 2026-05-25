@@ -1,0 +1,185 @@
+version: '3.9'
+
+# ═══════════════════════════════════════════════════════════════
+# MANARA OS — DOCKER COMPOSE (Development + Production)
+# Usage: docker-compose up -d
+# Production: docker-compose -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════════
+
+name: manara-os
+
+services:
+  # ── PostgreSQL Database ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: manara-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: manara_os
+      POSTGRES_USER: manara
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-manara_dev_pass}
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=en_US.UTF-8'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U manara -d manara_os']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - manara-network
+
+  # ── Redis Cache & Queue ──────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: manara-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - manara-network
+
+  # ── NestJS API ───────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api/Dockerfile
+      target: development
+    container_name: manara-api
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://manara:${POSTGRES_PASSWORD:-manara_dev_pass}@postgres:5432/manara_os
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
+      NODE_ENV: development
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - manara-network
+    command: npm run dev --workspace=apps/api
+
+  # ── Next.js Web App ──────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web/Dockerfile
+      target: development
+    container_name: manara-web
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+      NODE_ENV: development
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      - api
+    networks:
+      - manara-network
+    command: npm run dev --workspace=apps/web
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: manara-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_certs:/etc/nginx/certs
+    depends_on:
+      - api
+      - web
+    networks:
+      - manara-network
+    profiles:
+      - production
+
+  # ── BullMQ Dashboard (Bull Board) ────────────────────────────
+  bull-board:
+    image: deadly0/bull-board:latest
+    container_name: manara-bull-board
+    restart: unless-stopped
+    ports:
+      - '3002:3000'
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    depends_on:
+      - redis
+    networks:
+      - manara-network
+    profiles:
+      - tools
+
+  # ── PgAdmin (DB Management) ──────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: manara-pgadmin
+    restart: unless-stopped
+    ports:
+      - '5050:80'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@manaraos.ae
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - manara-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  nginx_certs:
+    driver: local
+
+networks:
+  manara-network:
+    driver: bridge
+    name: manara-os-network

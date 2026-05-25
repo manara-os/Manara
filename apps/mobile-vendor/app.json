@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Manara Vendor",
+    "slug": "manara-vendor",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "manaravendor",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E2B93B"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ae.manaraos.vendor"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E2B93B"
+      },
+      "package": "ae.manaraos.vendor"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#E2B93B",
+          "sounds": ["./assets/sounds/vendor_assignment_alert.mp3"],
+          "androidMode": "default"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "73b3722b-2fa2-46c1-b182-9c57e9a6db72"
+      },
+      "apiUrl": "https://api.manaraos.ae/api/v1",
+      "appVariant": "vendor"
+    },
+    "newArchEnabled": true
+  }
+}

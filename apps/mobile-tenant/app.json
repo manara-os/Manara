@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Manara Tenant",
+    "slug": "manara-tenant",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "manaratenant",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ae.manaraos.tenant"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#4F46E5"
+      },
+      "package": "ae.manaraos.tenant",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#4F46E5",
+          "androidMode": "default"
+        }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "73b3722b-2fa2-46c1-b182-9c57e9a6db72"
+      },
+      "apiUrl": "https://api.manaraos.ae/api/v1",
+      "appVariant": "tenant"
+    },
+    "newArchEnabled": true
+  }
+}

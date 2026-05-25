@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: manara
+  labels:
+    app.kubernetes.io/name: manara-os
+    app.kubernetes.io/managed-by: kustomize

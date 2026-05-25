@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Manara Owner",
+    "slug": "manara-owner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "manaraowner",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10B981"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ae.manaraos.owner"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#10B981"
+      },
+      "package": "ae.manaraos.owner"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#10B981",
+          "sounds": ["./assets/sounds/dedup-alerts.wav"],
+          "androidMode": "default",
+          "androidCollapsedTitle": "Manara Owner"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "73b3722b-2fa2-46c1-b182-9c57e9a6db72"
+      },
+      "apiUrl": "https://api.manaraos.ae/api/v1",
+      "appVariant": "owner"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "newArchEnabled": true
+  }
+}
