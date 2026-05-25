@@ -200,7 +200,10 @@
       "Bash(git -C \"/Users/amit/Desktop/Property Management flows/Manara OS Claude Code\" remote -v)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(gh auth *)",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx -y gh --version)",
+      "Bash(brew install *)"
     ]
   }
 }
