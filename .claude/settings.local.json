@@ -254,7 +254,9 @@
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx tsx /tmp/enrich_properties.ts)",
       "Bash(cp /tmp/enrich_properties.ts \"/Users/amit/Desktop/Property Management flows/Manara OS Claude Code/packages/database/enrich_properties.ts\")",
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx tsx enrich_properties.ts)",
-      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ DATABASE_URL=postgresql://manara:manara_dev_pass@localhost:5432/manara_os?schema=public npx tsx enrich_properties.ts)"
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ DATABASE_URL=postgresql://manara:manara_dev_pass@localhost:5432/manara_os?schema=public npx tsx enrich_properties.ts)",
+      "Bash(python3 -c \"import json,sys;d=json.load\\(sys.stdin\\);print\\('API status:', d.get\\('data',{}\\).get\\('status'\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"Web: %{http_code}\\\\n\" http://localhost:3000/)"
     ]
   }
 }

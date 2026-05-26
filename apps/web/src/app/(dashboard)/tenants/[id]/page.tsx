@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReportDownloadButton } from '@/components/report-download-button';
+import { SendMessageButton } from '@/components/communications/send-message-button';
 import { useState } from 'react';
 import { Building2, Home, FileText, ChevronRight } from 'lucide-react';
 
@@ -85,6 +86,20 @@ export default function TenantDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          <SendMessageButton
+            recipientType="tenant"
+            recipientId={id}
+            recipientName={tenant.fullName}
+            defaultChannel="WHATSAPP"
+            label="WhatsApp"
+          />
+          <SendMessageButton
+            recipientType="tenant"
+            recipientId={id}
+            recipientName={tenant.fullName}
+            defaultChannel="EMAIL"
+            label="Email"
+          />
           <ReportDownloadButton
             entityType="tenant"
             entityId={id}

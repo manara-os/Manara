@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReportDownloadButton } from '@/components/report-download-button';
+import { SendMessageButton } from '@/components/communications/send-message-button';
 import { Building2, TrendingUp, Home, Phone, Mail, Shield, Percent, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 
@@ -90,6 +91,20 @@ export default function OwnerDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 items-center flex-shrink-0">
+          <SendMessageButton
+            recipientType="owner"
+            recipientId={id}
+            recipientName={owner.fullName}
+            defaultChannel="WHATSAPP"
+            label="WhatsApp"
+          />
+          <SendMessageButton
+            recipientType="owner"
+            recipientId={id}
+            recipientName={owner.fullName}
+            defaultChannel="EMAIL"
+            label="Email"
+          />
           <ReportDownloadButton
             entityType="owner"
             entityId={id}
