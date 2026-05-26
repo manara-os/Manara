@@ -50,4 +50,10 @@ export class ReportsController {
   getLeases(@Request() req: any) {
     return this.reportsService.getLeaseReport(req.workspaceId);
   }
+
+  @Get('master-dashboard')
+  @ApiOperation({ summary: '4-section master dashboard: Operations, Inventory, Leasing & Renewals, Financials' })
+  getMasterDashboard(@Request() req: any) {
+    return this.reportsService.getMasterDashboard(req.workspaceId);
+  }
 }

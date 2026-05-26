@@ -1,11 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
+import { Wrench, Home, FileText, DollarSign, TrendingUp, Sparkles } from 'lucide-react';
 
 type ReportType = 'occupancy' | 'revenue' | 'maintenance' | 'tenants' | 'leases';
 
@@ -17,6 +18,235 @@ const REPORT_TABS: { key: ReportType; label: string; icon: string }[] = [
   { key: 'leases', label: 'Leases', icon: '📋' },
 ];
 
+// ─────────────────────────────────────────────────────────────────────
+// Kpi + helpers
+// ─────────────────────────────────────────────────────────────────────
+
+interface KpiProps {
+  label: string;
+  value: string | number;
+  sub?: string;
+  tone?: 'good' | 'warn' | 'bad' | 'neutral';
+}
+
+function Kpi({ label, value, sub, tone = 'neutral' }: KpiProps) {
+  const color =
+    tone === 'good' ? 'text-emerald-600' :
+    tone === 'warn' ? 'text-amber-600' :
+    tone === 'bad'  ? 'text-red-600' :
+    'text-gray-900';
+  return (
+    <div className="bg-white rounded-lg p-3 border border-gray-100">
+      <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500">{label}</p>
+      <p className={`text-xl font-bold mt-1 ${color}`}>{value}</p>
+      {sub && <p className="text-[10px] text-gray-500 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function SectionCard({ title, accent, icon: Icon, children }: { title: string; accent: string; icon: any; children: React.ReactNode }) {
+  return (
+    <Card style={{ background: accent }} className="border-0">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Icon className="w-4 h-4" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+function StackBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
+  const total = segments.reduce((s, x) => s + x.value, 0);
+  if (total === 0) return <p className="text-xs text-gray-400">No data yet</p>;
+  return (
+    <div className="space-y-1">
+      <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+        {segments.map((s) => (
+          <div
+            key={s.label}
+            style={{ width: `${(s.value / total) * 100}%`, background: s.color }}
+            title={`${s.label}: ${s.value}`}
+          />
+        ))}
+      </div>
+      <div className="flex justify-between text-[10px] text-gray-500 gap-2 flex-wrap">
+        {segments.map((s) => (
+          <span key={s.label} className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+            {s.label}: <b className="text-gray-700">{s.value}</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 4-section Master Dashboard
+// ─────────────────────────────────────────────────────────────────────
+
+function MasterDashboard() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['reports-master-dashboard'],
+    queryFn: () => api.get('/reports/master-dashboard'),
+    refetchInterval: 60_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-56" />)}
+      </div>
+    );
+  }
+
+  const dash: any = (data as any)?.data ?? data ?? {};
+  const ops = dash.operations?.maintenance ?? {};
+  const inv = dash.inventoryAndVacancy ?? {};
+  const lease = dash.leasingAndRenewals ?? {};
+  const fin = dash.financialsAndRevenue ?? {};
+
+  const fmt = (n: number) => (n ?? 0).toLocaleString();
+  const aed = (n: number) => `AED ${fmt(n ?? 0)}`;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      {/* Section 1: Operations */}
+      <SectionCard title="Operations" accent="#FEF3C7" icon={Wrench}>
+        <div className="grid grid-cols-4 gap-2">
+          <Kpi label="Open" value={fmt(ops.open ?? 0)} tone="warn" />
+          <Kpi label="Assigned" value={fmt(ops.assigned ?? 0)} />
+          <Kpi label="In Progress" value={fmt(ops.inProgress ?? 0)} />
+          <Kpi label="Completed (30d)" value={fmt(ops.completed ?? 0)} tone="good" />
+        </div>
+        <div className="mt-3">
+          <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-600 mb-1">Maintenance flow</p>
+          <StackBar
+            segments={[
+              { label: 'Open',        value: ops.open ?? 0,        color: '#F59E0B' },
+              { label: 'Assigned',    value: ops.assigned ?? 0,    color: '#3B82F6' },
+              { label: 'In Progress', value: ops.inProgress ?? 0,  color: '#8B5CF6' },
+              { label: 'Completed',   value: ops.completed ?? 0,   color: '#10B981' },
+            ]}
+          />
+        </div>
+        <Link href="/tickets" className="text-xs text-amber-700 hover:underline mt-3 inline-block">View tickets →</Link>
+      </SectionCard>
+
+      {/* Section 2: Inventory & Vacancy */}
+      <SectionCard title="Inventory & Vacancy" accent="#ECFDF5" icon={Home}>
+        <div className="grid grid-cols-2 gap-2">
+          <Kpi
+            label="Actual Vacant"
+            value={`${fmt(inv.actualVacant ?? 0)} / ${fmt(inv.totalUnits ?? 0)}`}
+            sub={`${inv.totalUnits > 0 ? Math.round((inv.actualVacant / inv.totalUnits) * 100) : 0}% of inventory`}
+            tone={inv.actualVacant > (inv.totalUnits ?? 0) * 0.2 ? 'warn' : 'good'}
+          />
+          <div className="bg-white rounded-lg p-3 border border-gray-100">
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Upcoming Vacancies</p>
+            <div className="flex gap-2 mt-1 flex-wrap">
+              <span className="text-sm"><b className="text-emerald-700">{fmt(inv.upcomingVacancies?.in30d ?? 0)}</b> <span className="text-[10px] text-gray-500">30d</span></span>
+              <span className="text-sm"><b className="text-amber-700">{fmt(inv.upcomingVacancies?.in60d ?? 0)}</b> <span className="text-[10px] text-gray-500">60d</span></span>
+              <span className="text-sm"><b className="text-red-700">{fmt(inv.upcomingVacancies?.in90d ?? 0)}</b> <span className="text-[10px] text-gray-500">90d</span></span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 bg-white rounded-lg p-3 border border-gray-100">
+          <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 mb-2">Inventory status</p>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div><b className="text-emerald-700 text-base block">{fmt(inv.listings?.listed ?? 0)}</b> <span className="text-gray-500">Listed</span></div>
+            <div><b className="text-amber-700 text-base block">{fmt(inv.listings?.unpublished ?? 0)}</b> <span className="text-gray-500">Unpublished</span></div>
+            <div><b className="text-red-700 text-base block">{fmt(inv.listings?.cancelled ?? 0)}</b> <span className="text-gray-500">Cancelled</span></div>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 italic">Exclusive Leasing module ships next</p>
+        </div>
+        <Link href="/properties" className="text-xs text-emerald-700 hover:underline mt-3 inline-block">View properties →</Link>
+      </SectionCard>
+
+      {/* Section 3: Leasing & Renewals */}
+      <SectionCard title="Leasing & Renewals" accent="#DBEAFE" icon={FileText}>
+        <div className="grid grid-cols-3 gap-2">
+          <Kpi label="New (30d)" value={fmt(lease.new30d ?? 0)} tone="good" />
+          <Kpi label="Renewed (30d)" value={fmt(lease.renewed30d ?? 0)} />
+          <Kpi label="Upcoming 120d" value={fmt(lease.upcoming120 ?? 0)} tone="warn" />
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <Kpi label="Pending Renewals" value={fmt(lease.pending ?? 0)} tone="warn" />
+          <div className="bg-white rounded-lg p-3 border border-gray-100">
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500">Rental Mix</p>
+            <div className="mt-2">
+              <StackBar
+                segments={[
+                  { label: 'New',     value: lease.rentalMix?.new ?? 0,     color: '#10B981' },
+                  { label: 'Renewed', value: lease.rentalMix?.renewed ?? 0, color: '#3B82F6' },
+                  { label: 'Other',   value: lease.rentalMix?.other ?? 0,   color: '#9CA3AF' },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+        <Link href="/leases" className="text-xs text-blue-700 hover:underline mt-3 inline-block">View leases →</Link>
+      </SectionCard>
+
+      {/* Section 4: Financials & Revenue */}
+      <SectionCard title="Financials & Revenue" accent="#FEE2E2" icon={DollarSign}>
+        <div className="space-y-2">
+          {/* PM Fee */}
+          <div className="bg-white rounded-lg p-3 border border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500">PM Fee</p>
+              <span className="text-[10px] text-gray-500">Last 30d</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-emerald-700"><b>{aed(fin.pmFee?.collected ?? 0)}</b> collected</span>
+              <span className="text-amber-700"><b>{aed(fin.pmFee?.pending ?? 0)}</b> pending</span>
+            </div>
+          </div>
+          {/* Ejari Fee */}
+          <div className="bg-white rounded-lg p-3 border border-gray-100">
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 mb-1">Ejari Fee</p>
+            <div className="flex justify-between text-sm">
+              <span className="text-emerald-700"><b>{aed(fin.ejariFee?.collected ?? 0)}</b> collected</span>
+              <span className="text-amber-700"><b>{aed(fin.ejariFee?.uncollected ?? 0)}</b> uncollected</span>
+            </div>
+          </div>
+          {/* Commissions */}
+          <div className="bg-white rounded-lg p-3 border border-gray-100">
+            <p className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 mb-1">Commissions</p>
+            <div className="flex justify-between text-sm">
+              <span><b className="text-gray-900">{aed(fin.commissions?.leasing ?? 0)}</b> <span className="text-gray-500">leasing</span></span>
+              <span><b className="text-gray-400">{aed(fin.commissions?.sale ?? 0)}</b> <span className="text-gray-400">sale</span></span>
+            </div>
+          </div>
+          {/* Total */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-800">Total Collections (30d)</p>
+              <TrendingUp className="w-3 h-3 text-amber-600" />
+            </div>
+            <p className="text-xl font-bold text-amber-900">{aed(fin.totalCollections?.total ?? 0)}</p>
+            <div className="flex gap-3 mt-1 text-[10px] text-amber-700 flex-wrap">
+              <span>Rental {aed(fin.totalCollections?.rental ?? 0)}</span>
+              <span>·</span>
+              <span>PM {aed(fin.totalCollections?.pm ?? 0)}</span>
+              <span>·</span>
+              <span>Comm {aed(fin.totalCollections?.commission ?? 0)}</span>
+            </div>
+          </div>
+        </div>
+        <Link href="/finance" className="text-xs text-red-700 hover:underline mt-3 inline-block">View finance →</Link>
+      </SectionCard>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Main page: master dashboard + legacy detail tabs
+// ─────────────────────────────────────────────────────────────────────
+
 export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>('occupancy');
   const [year, setYear] = useState(new Date().getFullYear());
@@ -27,225 +257,64 @@ export default function ReportsPage() {
     queryFn: () => api.get(`/reports/${activeReport}`, { params: { year, month } }),
   });
 
-  const report: any = data;
+  const report: any = (data as any)?.data ?? data;
 
   return (
-    <div className="p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Reports & Analytics</h1>
-        <div className="flex items-center gap-2">
-          <select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5"
-          >
-            {[2023, 2024, 2025, 2026].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <select
-            value={month ?? ''}
-            onChange={(e) => setMonth(e.target.value ? Number(e.target.value) : undefined)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5"
-          >
-            <option value="">All Months</option>
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {new Date(2024, i).toLocaleString('en-AE', { month: 'long' })}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="p-6 space-y-6 max-w-7xl">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <Sparkles className="w-7 h-7 text-amber-500" />
+          Reports & Analytics
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Real-time KPIs across operations, inventory, leasing and money. Refreshes every 60 seconds.
+        </p>
       </div>
 
-      {/* Report Type Tabs */}
-      <div className="flex border-b border-gray-200 gap-1">
-        {REPORT_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveReport(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeReport === tab.key
-                ? 'border-amber-500 text-amber-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <span>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <MasterDashboard />
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+      <div className="pt-4 border-t border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Detailed reports</h2>
+        <div className="flex gap-1 border-b border-gray-200 mb-4 flex-wrap">
+          {REPORT_TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveReport(t.key)}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${
+                activeReport === t.key
+                  ? 'text-amber-600 border-b-2 border-amber-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
         </div>
-      ) : !report ? (
-        <div className="text-center py-16 text-gray-400">No data available for this period.</div>
-      ) : (
-        <ReportContent type={activeReport} data={report} />
-      )}
+
+        {activeReport === 'revenue' && (
+          <div className="flex gap-2 mb-3">
+            <select value={year} onChange={(e) => setYear(parseInt(e.target.value))} className="text-sm border border-gray-200 rounded px-2 py-1">
+              {[2024, 2025, 2026].map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <select value={month ?? ''} onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : undefined)} className="text-sm border border-gray-200 rounded px-2 py-1">
+              <option value="">All months</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('en-AE', { month: 'long' })}</option>)}
+            </select>
+          </div>
+        )}
+
+        {isLoading ? (
+          <Skeleton className="h-48" />
+        ) : (
+          <Card>
+            <CardContent className="pt-5">
+              <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono overflow-auto">
+                {JSON.stringify(report, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
-  );
-}
-
-function StatCard({ label, value, color }: { label: string; value: any; color: string }) {
-  return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="pt-4 pb-4">
-        <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
-        <p className="text-xs text-gray-500 mt-1">{label}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ReportContent({ type, data }: { type: ReportType; data: any }) {
-  if (type === 'occupancy') {
-    const s = data.summary ?? {};
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Units" value={s.total} color="text-gray-900" />
-          <StatCard label="Occupied" value={s.occupied} color="text-amber-600" />
-          <StatCard label="Vacant" value={s.vacant} color="text-amber-500" />
-          <StatCard label="Occupancy Rate" value={s.occupancyRate != null ? `${s.occupancyRate.toFixed(1)}%` : '—'} color="text-blue-600" />
-        </div>
-        {data.units?.length > 0 && (
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2 pt-4 px-4"><CardTitle className="text-sm font-semibold">Units Breakdown</CardTitle></CardHeader>
-            <CardContent className="px-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b text-gray-500 text-xs">
-                    <th className="pb-2 font-medium">Unit</th>
-                    <th className="pb-2 font-medium">Type</th>
-                    <th className="pb-2 font-medium text-right">Annual Rent</th>
-                    <th className="pb-2 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.units.map((u: any) => (
-                    <tr key={u.id} className="border-b last:border-0">
-                      <td className="py-2 font-medium text-sm">{u.unitNumber}</td>
-                      <td className="py-2 text-xs text-gray-500">{u.type}</td>
-                      <td className="py-2 text-right text-sm">AED {Number(u.annualRent ?? 0).toLocaleString()}</td>
-                      <td className="py-2 text-right">
-                        <Badge variant={u.occupancyStatus === 'OCCUPIED' ? 'success' : 'secondary'} className="text-[10px]">
-                          {u.occupancyStatus}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  if (type === 'revenue') {
-    const s = data.summary ?? {};
-    const monthly = data.monthlyBreakdown ?? [];
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Revenue" value={`AED ${Number(s.totalRevenue ?? 0).toLocaleString()}`} color="text-amber-600" />
-          <StatCard label="Total Expenses" value={`AED ${Number(s.totalExpenses ?? 0).toLocaleString()}`} color="text-red-500" />
-          <StatCard label="Net Income" value={`AED ${Number(s.netIncome ?? 0).toLocaleString()}`} color="text-green-600" />
-        </div>
-        {monthly.length > 0 && (
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2 pt-4 px-4"><CardTitle className="text-sm font-semibold">Monthly Breakdown</CardTitle></CardHeader>
-            <CardContent className="px-4">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b text-gray-500 text-xs">
-                    <th className="pb-2 font-medium">Month</th>
-                    <th className="pb-2 font-medium text-right">Revenue</th>
-                    <th className="pb-2 font-medium text-right">Expenses</th>
-                    <th className="pb-2 font-medium text-right">Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthly.filter((m: any) => m.revenue > 0 || m.expenses > 0).map((m: any) => (
-                    <tr key={m.month} className="border-b last:border-0">
-                      <td className="py-2 font-medium">{new Date(2024, m.month - 1).toLocaleString('en-AE', { month: 'long' })}</td>
-                      <td className="py-2 text-right text-amber-600">AED {Number(m.revenue).toLocaleString()}</td>
-                      <td className="py-2 text-right text-red-500">AED {Number(m.expenses).toLocaleString()}</td>
-                      <td className="py-2 text-right font-medium">AED {Number(m.net).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                  {monthly.every((m: any) => m.revenue === 0 && m.expenses === 0) && (
-                    <tr><td colSpan={4} className="py-4 text-center text-gray-400 text-xs">No transactions recorded for this period</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  if (type === 'maintenance') {
-    const s = data.summary ?? {};
-    const cats = data.byCategory ?? [];
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Tickets" value={s.total ?? 0} color="text-gray-900" />
-          <StatCard label="Open" value={s.open ?? 0} color="text-blue-600" />
-          <StatCard label="Resolved" value={s.resolved ?? 0} color="text-green-600" />
-          <StatCard label="Pending" value={s.pending ?? 0} color="text-amber-600" />
-        </div>
-        {cats.length > 0 && (
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2 pt-4 px-4"><CardTitle className="text-sm font-semibold">By Category</CardTitle></CardHeader>
-            <CardContent className="px-4">
-              <div className="space-y-2">
-                {cats.map((c: any) => (
-                  <div key={c.category} className="flex items-center justify-between py-1 border-b last:border-0">
-                    <span className="text-sm text-gray-700">{c.category}</span>
-                    <Badge variant="secondary" className="text-xs">{c.count}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  if (type === 'tenants') {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total Tenants" value={data.total ?? 0} color="text-gray-900" />
-        <StatCard label="KYC Verified" value={data.kycVerified ?? 0} color="text-green-600" />
-        <StatCard label="With Active Leases" value={data.withActiveLeases ?? 0} color="text-amber-600" />
-        <StatCard label="Overdue Cheques" value={data.overdueCount ?? 0} color="text-red-600" />
-      </div>
-    );
-  }
-
-  if (type === 'leases') {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="Active Leases" value={data.active ?? 0} color="text-green-600" />
-        <StatCard label="Expired" value={data.expired ?? 0} color="text-red-500" />
-        <StatCard label="Expiring in 90 Days" value={data.expiringSoon ?? 0} color="text-amber-600" />
-      </div>
-    );
-  }
-
-  return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="pt-6">
-        <pre className="text-xs text-gray-500 overflow-auto">{JSON.stringify(data, null, 2)}</pre>
-      </CardContent>
-    </Card>
   );
 }
