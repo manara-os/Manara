@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { leasesApi, integrationsApi } from '@/lib/api';
+import { InspectionChecklist } from '@/components/inspections/inspection-checklist';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,15 @@ function MoveInStepper({ lease, onUpdate, isPending }: { lease: any; onUpdate: (
         )}
         {current === 'COMPLETE' && (
           <p className="text-xs text-green-600 text-center font-medium mt-1">Move-in complete — renewal alerts scheduled</p>
+        )}
+        {(current === 'PENDING' || current === 'ONGOING') && (
+          <div className="mt-2 pt-2 border-t border-gray-100">
+            <InspectionChecklist
+              type="move-in"
+              leaseId={lease.id}
+              tenantName={lease.tenant?.fullName}
+            />
+          </div>
         )}
       </CardContent>
     </Card>
