@@ -6,7 +6,13 @@ import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
-import { Wrench, Home, FileText, DollarSign, TrendingUp, Sparkles } from 'lucide-react';
+import { Wrench, Home, FileText, DollarSign, TrendingUp, Sparkles, Users, Calendar, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
+  LineChart, Line,
+} from 'recharts';
+import { Badge } from '@/components/ui/badge';
 
 type ReportType = 'occupancy' | 'revenue' | 'maintenance' | 'tenants' | 'leases';
 
@@ -306,15 +312,391 @@ export default function ReportsPage() {
         {isLoading ? (
           <Skeleton className="h-48" />
         ) : (
-          <Card>
-            <CardContent className="pt-5">
-              <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono overflow-auto">
-                {JSON.stringify(report, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
+          <DetailedReportView type={activeReport} report={report} />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Per-report visualisations
+// ─────────────────────────────────────────────────────────────────────
+
+function DetailedReportView({ type, report }: { type: ReportType; report: any }) {
+  if (!report) return <Card><CardContent className="pt-5 text-sm text-gray-400">No data available</CardContent></Card>;
+
+  switch (type) {
+    case 'occupancy':   return <OccupancyView report={report} />;
+    case 'revenue':     return <RevenueView report={report} />;
+    case 'maintenance': return <MaintenanceView report={report} />;
+    case 'tenants':     return <TenantsView report={report} />;
+    case 'leases':      return <LeasesView report={report} />;
+  }
+}
+
+const PIE_COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899'];
+
+function OccupancyView({ report }: { report: any }) {
+  const summary = report?.summary ?? {};
+  const units: any[] = report?.units ?? [];
+
+  const pieData = [
+    { name: 'Occupied',    value: summary.occupied ?? 0,    color: '#10B981' },
+    { name: 'Vacant',      value: summary.vacant ?? 0,      color: '#F59E0B' },
+    { name: 'Maintenance', value: summary.maintenance ?? 0, color: '#9CA3AF' },
+  ].filter((d) => d.value > 0);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Donut + summary */}
+      <Card className="lg:col-span-1">
+        <CardHeader><CardTitle className="text-base">Occupancy breakdown</CardTitle></CardHeader>
+        <CardContent>
+          <div className="h-48">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                  {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Pie>
+                <Tooltip />
+                <Legend verticalAlign="bottom" height={36} iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-center -mt-32 pointer-events-none">
+            <p className="text-3xl font-bold text-gray-900">{summary.occupancyRate ?? 0}%</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Occupancy</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats column */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">At a glance</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            ['Total units', summary.total ?? 0, 'text-gray-900'],
+            ['Occupied', summary.occupied ?? 0, 'text-emerald-600'],
+            ['Vacant', summary.vacant ?? 0, 'text-amber-600'],
+            ['Under maintenance', summary.maintenance ?? 0, 'text-gray-500'],
+          ].map(([label, val, color]: any) => (
+            <div key={label} className="flex items-center justify-between border-b border-gray-50 pb-2 last:border-0">
+              <span className="text-sm text-gray-600">{label}</span>
+              <span className={`text-lg font-bold ${color}`}>{val}</span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Vacant units list */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-amber-600" /> Vacant units
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {units.filter((u) => u.occupancyStatus === 'VACANT').length === 0 ? (
+            <p className="text-xs text-gray-400">All units occupied 🎉</p>
+          ) : (
+            <ul className="space-y-1.5 max-h-44 overflow-y-auto">
+              {units
+                .filter((u) => u.occupancyStatus === 'VACANT')
+                .slice(0, 10)
+                .map((u) => (
+                  <li key={u.id} className="text-xs flex justify-between items-center">
+                    <span className="text-gray-700">
+                      <b>{u.unitNumber}</b> · {u.property?.name}
+                    </span>
+                    <span className="text-amber-700 font-semibold">
+                      {u.annualRent ? `AED ${Number(u.annualRent).toLocaleString()}` : '—'}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function RevenueView({ report }: { report: any }) {
+  // Server returns { totalRevenue, collections: [{amount, collectedAt}], expenses: [...] }
+  const totalRevenue = report?.totalRevenue ?? 0;
+  const collections: any[] = report?.collections ?? [];
+  const expenses: any[] = report?.expenses ?? [];
+  const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount ?? 0), 0);
+  const net = totalRevenue - totalExpenses;
+
+  // Group collections by month
+  const byMonth = new Map<string, { month: string; revenue: number; expenses: number }>();
+  for (const c of collections) {
+    const m = new Date(c.collectedAt).toLocaleDateString('en-AE', { month: 'short' });
+    const row = byMonth.get(m) ?? { month: m, revenue: 0, expenses: 0 };
+    row.revenue += Number(c.amount ?? 0);
+    byMonth.set(m, row);
+  }
+  for (const e of expenses) {
+    const m = new Date(e.expenseDate).toLocaleDateString('en-AE', { month: 'short' });
+    const row = byMonth.get(m) ?? { month: m, revenue: 0, expenses: 0 };
+    row.expenses += Number(e.amount ?? 0);
+    byMonth.set(m, row);
+  }
+  const chartData = Array.from(byMonth.values());
+
+  const expensesByCategory = expenses.reduce((acc: Record<string, number>, e) => {
+    acc[e.category] = (acc[e.category] ?? 0) + Number(e.amount ?? 0);
+    return acc;
+  }, {});
+  const catData = Object.entries(expensesByCategory).map(([name, value]) => ({ name, value: value as number }));
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Card className="bg-emerald-50 border-0">
+          <CardContent className="p-4">
+            <p className="text-[10px] text-emerald-700 uppercase tracking-wide font-semibold">Revenue</p>
+            <p className="text-2xl font-bold text-emerald-700 mt-1">AED {totalRevenue.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-red-50 border-0">
+          <CardContent className="p-4">
+            <p className="text-[10px] text-red-700 uppercase tracking-wide font-semibold">Expenses</p>
+            <p className="text-2xl font-bold text-red-700 mt-1">AED {totalExpenses.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card className={`${net >= 0 ? 'bg-blue-50' : 'bg-amber-50'} border-0`}>
+          <CardContent className="p-4">
+            <p className={`text-[10px] ${net >= 0 ? 'text-blue-700' : 'text-amber-700'} uppercase tracking-wide font-semibold`}>Net</p>
+            <p className={`text-2xl font-bold ${net >= 0 ? 'text-blue-700' : 'text-amber-700'} mt-1`}>AED {net.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {chartData.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Monthly cash flow</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                  <Tooltip formatter={(v: any) => `AED ${Number(v).toLocaleString()}`} />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="revenue" fill="#10B981" name="Revenue" />
+                  <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {catData.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Expenses by category</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-56">
+              <ResponsiveContainer>
+                <BarChart data={catData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
+                  <Tooltip formatter={(v: any) => `AED ${Number(v).toLocaleString()}`} />
+                  <Bar dataKey="value" fill="#F59E0B" name="Amount" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function MaintenanceView({ report }: { report: any }) {
+  const summary = report?.summary ?? {};
+  const byCategory: any[] = report?.byCategory ?? [];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader><CardTitle className="text-base">Ticket status</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-amber-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-amber-700">{summary.open ?? 0}</p>
+              <p className="text-xs text-amber-600 mt-1">Open</p>
+            </div>
+            <div className="bg-emerald-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-emerald-700">{summary.resolved ?? 0}</p>
+              <p className="text-xs text-emerald-600 mt-1">Resolved</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-gray-700">{summary.pending ?? 0}</p>
+              <p className="text-xs text-gray-600 mt-1">Pending</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <p className="text-3xl font-bold text-blue-700">{summary.total ?? 0}</p>
+              <p className="text-xs text-blue-600 mt-1">Total</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">By category</CardTitle></CardHeader>
+        <CardContent>
+          {byCategory.length === 0 ? (
+            <p className="text-xs text-gray-400">No tickets yet</p>
+          ) : (
+            <div className="h-48">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={byCategory} dataKey="count" nameKey="category" cx="50%" cy="50%" outerRadius={70}>
+                    {byCategory.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" iconSize={10} wrapperStyle={{ fontSize: 10 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function TenantsView({ report }: { report: any }) {
+  const total = report?.total ?? 0;
+  const kyc = report?.kycVerified ?? 0;
+  const active = report?.withActiveLeases ?? 0;
+  const overdue = report?.overdueCount ?? 0;
+
+  const kycPct = total > 0 ? Math.round((kyc / total) * 100) : 0;
+  const activePct = total > 0 ? Math.round((active / total) * 100) : 0;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader><CardTitle className="text-base">Tenant funnel</CardTitle></CardHeader>
+        <CardContent>
+          <div className="h-56">
+            <ResponsiveContainer>
+              <BarChart data={[
+                { stage: 'Registered',    count: total },
+                { stage: 'KYC verified',  count: kyc },
+                { stage: 'Active lease',  count: active },
+              ]} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis dataKey="stage" type="category" tick={{ fontSize: 11 }} width={110} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#D97706" name="Tenants" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Health indicators</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> KYC verified</span>
+              <span className="font-bold text-emerald-700">{kyc} / {total} ({kycPct}%)</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500" style={{ width: `${kycPct}%` }} />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600 flex items-center gap-1"><Users className="w-3.5 h-3.5 text-blue-600" /> Active lease</span>
+              <span className="font-bold text-blue-700">{active} / {total} ({activePct}%)</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500" style={{ width: `${activePct}%` }} />
+            </div>
+          </div>
+          <div className={`rounded-lg p-3 ${overdue > 0 ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'}`}>
+            <div className="flex items-center gap-2">
+              <AlertOctagon className={`w-4 h-4 ${overdue > 0 ? 'text-red-600' : 'text-emerald-600'}`} />
+              <p className={`text-sm font-semibold ${overdue > 0 ? 'text-red-800' : 'text-emerald-800'}`}>
+                {overdue > 0 ? `${overdue} tenant${overdue === 1 ? '' : 's'} overdue` : 'All paid up'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function LeasesView({ report }: { report: any }) {
+  const active = report?.active ?? 0;
+  const expired = report?.expired ?? 0;
+  const expiringSoon = report?.expiringSoon ?? 0;
+
+  const data = [
+    { status: 'Active',         count: active,        color: '#10B981' },
+    { status: 'Expiring (90d)', count: expiringSoon,  color: '#F59E0B' },
+    { status: 'Expired',        count: expired,       color: '#6B7280' },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader><CardTitle className="text-base">Lease pipeline</CardTitle></CardHeader>
+        <CardContent>
+          <div className="h-56">
+            <ResponsiveContainer>
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="status" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="count" name="Leases">
+                  {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Action required</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="bg-emerald-50 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">Active leases</p>
+              <p className="text-xs text-emerald-600 mt-0.5">In force, generating rent</p>
+            </div>
+            <p className="text-2xl font-bold text-emerald-700">{active}</p>
+          </div>
+          <div className="bg-amber-50 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Expiring in 90 days</p>
+              <p className="text-xs text-amber-600 mt-0.5">Initiate renewal or screening</p>
+            </div>
+            <p className="text-2xl font-bold text-amber-700">{expiringSoon}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Expired</p>
+              <p className="text-xs text-gray-500 mt-0.5">Lifetime archive</p>
+            </div>
+            <p className="text-2xl font-bold text-gray-700">{expired}</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

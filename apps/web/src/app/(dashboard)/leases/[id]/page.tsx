@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { leasesApi, integrationsApi } from '@/lib/api';
 import { InspectionChecklist } from '@/components/inspections/inspection-checklist';
+import { RenewalContractFlow } from '@/components/leases/renewal-contract-flow';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -393,6 +394,9 @@ export default function LeaseDetailPage() {
           </Button>
         </div>
       )}
+
+      {/* Renewal Contract Flow — shows when lease is in expiry window or already started */}
+      <RenewalContractFlow lease={lease} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left column — lease terms */}
