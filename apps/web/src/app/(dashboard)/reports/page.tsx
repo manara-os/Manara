@@ -161,7 +161,7 @@ function MasterDashboard() {
             <div><b className="text-amber-700 text-base block">{fmt(inv.listings?.unpublished ?? 0)}</b> <span className="text-gray-500">Unpublished</span></div>
             <div><b className="text-red-700 text-base block">{fmt(inv.listings?.cancelled ?? 0)}</b> <span className="text-gray-500">Cancelled</span></div>
           </div>
-          <p className="text-[10px] text-gray-400 mt-2 italic">Exclusive Leasing module ships next</p>
+          <Link href="/listings" className="text-[10px] text-amber-700 hover:underline mt-2 inline-block">Manage listings →</Link>
         </div>
         <Link href="/properties" className="text-xs text-emerald-700 hover:underline mt-3 inline-block">View properties →</Link>
       </SectionCard>

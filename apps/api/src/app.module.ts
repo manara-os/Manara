@@ -21,6 +21,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { BillingModule } from './modules/subscriptions/billing.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
+import { ListingsModule } from './modules/listings/listings.module';
 import { DatabaseModule } from './database/database.module';
 import { QueuesModule } from './queues/queues.module';
 import { FilesModule } from './files/files.module';
@@ -99,6 +100,7 @@ import { validationSchema } from './config/validation';
     BillingModule,
     ReportsModule,
     CommunicationsModule,
+    ListingsModule,
     QueuesModule,
   ],
 })

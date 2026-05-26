@@ -20,6 +20,7 @@ import {
   AlertOctagon,
   MessageSquare,
   Lightbulb,
+  Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -50,6 +51,7 @@ const navGroups: NavGroup[] = [
     label: 'Operations',
     items: [
       { label: 'Properties',  href: '/properties',  icon: Building2,       roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Listings',    href: '/listings',    icon: Megaphone,       roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Tenants',     href: '/tenants',     icon: Users,           roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Leases',      href: '/leases',      icon: FileText,        roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Maintenance', href: '/tickets',     icon: Wrench,          roles: ['PM_ADMIN', 'PM_OPS'] },

@@ -164,9 +164,12 @@ export class ReportsService {
     ]);
 
     // ── 2. Inventory & Vacancy ──
-    const [vacantUnits, totalUnits] = await Promise.all([
+    const [vacantUnits, totalUnits, listingsListed, listingsUnpub, listingsCancelled] = await Promise.all([
       this.prisma.unit.count({ where: { workspaceId, occupancyStatus: 'VACANT' } }),
       this.prisma.unit.count({ where: { workspaceId } }),
+      this.prisma.propertyListing.count({ where: { workspaceId, status: 'ACTIVE' } }),
+      this.prisma.propertyListing.count({ where: { workspaceId, status: 'PAUSED' } }),
+      this.prisma.propertyListing.count({ where: { workspaceId, status: 'EXPIRED' } }),
     ]);
 
     const [upcoming30, upcoming60, upcoming90] = await Promise.all([
@@ -243,7 +246,7 @@ export class ReportsService {
         actualVacant: vacantUnits,
         totalUnits,
         upcomingVacancies: { in30d: upcoming30, in60d: upcoming60, in90d: upcoming90 },
-        listings: { listed: 0, unpublished: 0, cancelled: 0 }, // Exclusive Leasing module ships next
+        listings: { listed: listingsListed, unpublished: listingsUnpub, cancelled: listingsCancelled },
       },
       leasingAndRenewals: {
         new30d: newLeases30d,
