@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
-import { X, User2, ChevronRight } from 'lucide-react';
+import { X, User2, ChevronRight, Trash2, Calendar, Globe, Wallet, Info, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 const OCCUPANCY_COLORS: Record<string, 'success' | 'warning' | 'secondary'> = {
@@ -228,6 +228,7 @@ export default function PropertyDetailPage() {
   const [activeTab, setActiveTab] = useState<'units' | 'tickets' | 'documents'>('units');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddUnitModal, setShowAddUnitModal] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: property, isLoading } = useQuery({
     queryKey: ['property', id],
@@ -268,6 +269,8 @@ export default function PropertyDetailPage() {
   const occupied = units.filter((u) => u.occupancyStatus === 'OCCUPIED').length;
   const vacant = units.filter((u) => u.occupancyStatus === 'VACANT').length;
   const occupancyRate = units.length > 0 ? Math.round((occupied / units.length) * 100) : 0;
+  const photos: string[] = Array.isArray(prop.photos) ? prop.photos : [];
+  const amenities: string[] = Array.isArray(prop.amenities) ? prop.amenities : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -284,8 +287,10 @@ export default function PropertyDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">{prop.name}</h1>
-          <p className="text-gray-500 mt-1">{prop.address}, {prop.city}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{prop.name}</h1>
+          <p className="text-gray-500 mt-1 flex items-center gap-1">
+            📍 {prop.address}, {prop.city}
+          </p>
           {prop.owner && (
             <Link
               href={`/owners/${prop.owner.id ?? prop.ownerId}`}
@@ -298,61 +303,240 @@ export default function PropertyDetailPage() {
         </div>
         <div className="flex gap-2">
           <Badge variant="outline">{prop.type?.replace(/_/g, ' ')}</Badge>
-          <Button size="sm" onClick={() => setShowEditModal(true)}>Edit Property</Button>
+          <Button size="sm" onClick={() => setShowEditModal(true)} className="bg-amber-600 hover:bg-amber-700">
+            ✎  Edit Property
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-600 border-red-200 hover:bg-red-50"
+            onClick={() => {
+              if (units.length > 0) {
+                toast.error(`Cannot delete: ${units.length} units linked. Remove or reassign units first.`);
+                return;
+              }
+              if (confirm(`Delete ${prop.name}? This cannot be undone.`)) {
+                toast.info('Delete is guarded by backend — only properties with zero units and zero history can be removed.');
+              }
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+          </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-lg font-semibold text-gray-900">{prop.totalUnits ?? units.length}</p>
-            <p className="text-sm text-gray-500 mt-1">Total Units</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-lg font-semibold text-amber-600">{occupied}</p>
-            <p className="text-sm text-gray-500 mt-1">Occupied</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-lg font-semibold text-amber-500">{vacant}</p>
-            <p className="text-sm text-gray-500 mt-1">Vacant</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-lg font-semibold text-blue-600">{occupancyRate}%</p>
-            <p className="text-sm text-gray-500 mt-1">Occupancy Rate</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Property Info */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">Property Information</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            {[
-              ['City', prop.city],
-              ['Area', prop.area],
-              ['Type', prop.type?.replace(/_/g, ' ')],
-              ['Year Built', prop.yearBuilt ?? '—'],
-              ['Total Units', prop.totalUnits ?? '—'],
-              ['Makani No.', prop.makaniNo ?? '—'],
-              ['Title Deed', prop.titleDeedNo ?? '—'],
-              ['Developer', prop.developerName ?? '—'],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-gray-400 text-xs uppercase tracking-wide">{label}</p>
-                <p className="font-medium text-gray-900 mt-0.5">{value ?? '—'}</p>
-              </div>
-            ))}
+      {/* Photo Gallery */}
+      {photos.length > 0 ? (
+        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-72 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setLightboxIndex(0)}
+            className="col-span-2 row-span-2 relative group overflow-hidden"
+          >
+            <img src={photos[0]} alt={prop.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          </button>
+          {photos.slice(1, 5).map((src: string, i: number) => (
+            <button
+              key={i}
+              onClick={() => setLightboxIndex(i + 1)}
+              className="relative group overflow-hidden"
+            >
+              <img src={src} alt={`${prop.name} ${i + 2}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              {i === 3 && photos.length > 5 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold">
+                  +{photos.length - 5} more
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="h-48 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center border border-amber-200">
+          <div className="text-center">
+            <ImageIcon className="w-10 h-10 text-amber-400 mx-auto mb-2" />
+            <p className="text-sm text-amber-700 font-medium">No photos yet</p>
+            <p className="text-xs text-amber-600 mt-1">Add property photos to bring this listing to life</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Lightbox modal */}
+      {lightboxIndex !== null && photos[lightboxIndex] && (
+        <div
+          onClick={() => setLightboxIndex(null)}
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-8 cursor-zoom-out"
+        >
+          <img src={photos[lightboxIndex]} alt="" className="max-w-full max-h-full rounded-xl shadow-2xl" />
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
+            className="absolute top-4 right-4 text-white hover:text-amber-400"
+          >
+            <X className="w-7 h-7" />
+          </button>
+        </div>
+      )}
+
+      {/* Main 2-column grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 space-y-5">
+          {/* Stats — color coded */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="border-0 shadow-sm bg-white">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Units in system</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{prop.totalUnits ?? units.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm bg-emerald-50">
+              <CardContent className="p-4">
+                <p className="text-xs text-emerald-700 uppercase tracking-wide font-semibold">Occupied</p>
+                <p className="text-3xl font-bold text-emerald-600 mt-1">{occupied}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm bg-amber-50">
+              <CardContent className="p-4">
+                <p className="text-xs text-amber-700 uppercase tracking-wide font-semibold">Vacant</p>
+                <p className="text-3xl font-bold text-amber-600 mt-1">{vacant}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Description */}
+          {prop.description && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">About this property</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700 leading-relaxed">{prop.description}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Amenities */}
+          {amenities.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  Amenities ({amenities.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {amenities.map((a: string) => (
+                    <span
+                      key={a}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium rounded-full"
+                    >
+                      ✓ {a}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Property Info */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Property Information</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                {[
+                  ['City', prop.city],
+                  ['Area', prop.area],
+                  ['Type', prop.type?.replace(/_/g, ' ')],
+                  ['Year Built', prop.yearBuilt ?? '—'],
+                  ['Total Floors', prop.meta?.totalFloors ?? '—'],
+                  ['Configured Units', prop.totalUnits ?? '—'],
+                  ['Plot No.', prop.plotNo ?? '—'],
+                  ['Makani No.', prop.makaniNo ?? '—'],
+                  ['Title Deed', prop.titleDeedNo ?? '—'],
+                  ['Developer', prop.developerName ?? '—'],
+                  ['Service Charge', prop.serviceCharge ? `AED ${Number(prop.serviceCharge).toFixed(2)}/sqft` : '—'],
+                  ['Building Age', prop.buildingAge ? `${prop.buildingAge} yrs` : '—'],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-gray-400 text-xs uppercase tracking-wide">{label}</p>
+                    <p className="font-medium text-gray-900 mt-0.5">{value ?? '—'}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right rail */}
+        <div className="space-y-4">
+          {/* Record metadata */}
+          <Card>
+            <CardHeader><CardTitle className="text-base">Record</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Created
+                </p>
+                <p className="font-medium text-gray-900 mt-0.5">
+                  {prop.createdAt ? new Date(prop.createdAt).toLocaleDateString('en-AE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide flex items-center gap-1">
+                  <Globe className="w-3 h-3" /> Country
+                </p>
+                <p className="font-medium text-gray-900 mt-0.5">
+                  {prop.countryCode === 'AE' ? '🇦🇪 United Arab Emirates' : prop.countryCode}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide flex items-center gap-1">
+                  <Wallet className="w-3 h-3" /> Currency
+                </p>
+                <p className="font-medium text-gray-900 mt-0.5">{prop.currencyCode ?? 'AED'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide">Status</p>
+                <Badge variant={prop.status === 'ACTIVE' ? 'success' : 'secondary'} className="mt-1">
+                  {prop.status ?? 'ACTIVE'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Map */}
+          {prop.latitude && prop.longitude && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Location</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(prop.longitude) - 0.005},${Number(prop.latitude) - 0.003},${Number(prop.longitude) + 0.005},${Number(prop.latitude) + 0.003}&layer=mapnik&marker=${prop.latitude},${prop.longitude}`}
+                  width="100%"
+                  height="180"
+                  className="rounded-b-xl"
+                  loading="lazy"
+                />
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${prop.latitude}&mlon=${prop.longitude}#map=17/${prop.latitude}/${prop.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center py-2 text-xs text-amber-600 hover:underline border-t"
+                >
+                  Open larger map →
+                </a>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Operational note */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-4">
+              <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide flex items-center gap-1 mb-2">
+                <Info className="w-3 h-3" /> Operational note
+              </p>
+              <p className="text-xs text-blue-700 leading-relaxed">
+                Property delete is guarded by backend truth. If this property has units or any historical lease or ticket data, the delete action will stay blocked.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div>

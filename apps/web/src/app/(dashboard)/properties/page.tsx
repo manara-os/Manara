@@ -65,21 +65,34 @@ export default function PropertiesPage() {
               transition={{ delay: i * 0.05 }}
             >
               <Link href={`/properties/${property.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-amber-600" />
-                        </div>
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer group overflow-hidden p-0">
+                  {/* Hero image */}
+                  {Array.isArray(property.photos) && property.photos.length > 0 ? (
+                    <div className="h-32 w-full relative overflow-hidden">
+                      <img
+                        src={property.photos[0]}
+                        alt={property.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Badge variant={property.status === 'ACTIVE' ? 'success' : 'secondary'} className="text-xs shadow-sm">
+                          {property.status ?? 'ACTIVE'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-32 w-full bg-gradient-to-br from-amber-100 to-orange-200 flex items-center justify-center">
+                      <Building2 className="w-10 h-10 text-amber-500" />
+                    </div>
+                  )}
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-amber-600 transition-colors">{property.name}</h3>
-                          <p className="text-xs text-gray-500">{property.type}</p>
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-amber-600 transition-colors truncate">{property.name}</h3>
+                          <p className="text-xs text-gray-500">{property.type?.replace(/_/g, ' ')}</p>
                         </div>
                       </div>
-                      <Badge variant={property.status === 'ACTIVE' ? 'success' : 'secondary'} className="text-xs">
-                        {property.status ?? 'ACTIVE'}
-                      </Badge>
                     </div>
 
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">

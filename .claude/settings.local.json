@@ -250,7 +250,11 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); a=d.get\\('data',d\\); print\\('TOKEN:', a.get\\('accessToken',''\\)[:40] + '...'\\); print\\('WS_ID:', a.get\\('workspaces',[{}]\\)[0].get\\('workspaceId',''\\)\\)\")",
       "Bash(curl -s -X GET \"http://localhost:3001/api/v1/properties/00000000-0000-0000-0001-000000000003\" -H \"Authorization: Bearer $\\(curl -s -X POST http://localhost:3001/api/v1/auth/verify-otp -H 'Content-Type: application/json' -d '{\"phone\":\"+971501000002\",\"code\":\"123456\"}')",
       "Bash(python3 -c 'import json,sys;d=json.load\\(sys.stdin\\);print\\(\"Status: 200 OK\" if d.get\\(\"success\"\\) else d.get\\(\"message\",\"unknown\"\\)[:200]\\)')",
-      "Bash(curl -s -o /dev/null -w \"API: %{http_code}\\\\n\" http://localhost:3001/api/v1/health)"
+      "Bash(curl -s -o /dev/null -w \"API: %{http_code}\\\\n\" http://localhost:3001/api/v1/health)",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx tsx /tmp/enrich_properties.ts)",
+      "Bash(cp /tmp/enrich_properties.ts \"/Users/amit/Desktop/Property Management flows/Manara OS Claude Code/packages/database/enrich_properties.ts\")",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ npx tsx enrich_properties.ts)",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ DATABASE_URL=postgresql://manara:manara_dev_pass@localhost:5432/manara_os?schema=public npx tsx enrich_properties.ts)"
     ]
   }
 }

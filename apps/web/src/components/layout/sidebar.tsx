@@ -16,6 +16,10 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  UserPlus,
+  AlertOctagon,
+  MessageSquare,
+  Lightbulb,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -31,18 +35,47 @@ interface NavItem {
   roles?: UserRole[];
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard',   href: '/dashboard',   icon: LayoutDashboard, roles: ['PM_ADMIN', 'PM_OPS', 'PLATFORM_ADMIN'] },
-  { label: 'Properties',  href: '/properties',  icon: Building2,       roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Tenants',     href: '/tenants',     icon: Users,           roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Leases',      href: '/leases',      icon: FileText,        roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Maintenance', href: '/tickets',     icon: Wrench,          roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Finance',     href: '/finance',     icon: DollarSign,      roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Owners',      href: '/owners',      icon: UserCircle,      roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Vendors',     href: '/vendors',     icon: Truck,           roles: ['PM_ADMIN', 'PM_OPS'] },
-  { label: 'Reports',     href: '/reports',     icon: BarChart3,       roles: ['PM_ADMIN'] },
-  { label: 'Settings',    href: '/settings',    icon: Settings,        roles: ['PM_ADMIN'] },
+interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    items: [
+      { label: 'Dashboard',   href: '/dashboard',   icon: LayoutDashboard, roles: ['PM_ADMIN', 'PM_OPS', 'PLATFORM_ADMIN'] },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { label: 'Properties',  href: '/properties',  icon: Building2,       roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Tenants',     href: '/tenants',     icon: Users,           roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Leases',      href: '/leases',      icon: FileText,        roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Maintenance', href: '/tickets',     icon: Wrench,          roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Owners',      href: '/owners',      icon: UserCircle,      roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Vendors',     href: '/vendors',     icon: Truck,           roles: ['PM_ADMIN', 'PM_OPS'] },
+    ],
+  },
+  {
+    label: 'Money',
+    items: [
+      { label: 'Finance',     href: '/finance',     icon: DollarSign,      roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Overdue',     href: '/overdue',     icon: AlertOctagon,    roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Reports',     href: '/reports',     icon: BarChart3,       roles: ['PM_ADMIN'] },
+    ],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { label: 'Team',            href: '/team',             icon: UserPlus,    roles: ['PM_ADMIN'] },
+      { label: 'Feature Requests', href: '/feature-requests', icon: Lightbulb,   roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Settings',        href: '/settings',         icon: Settings,    roles: ['PM_ADMIN'] },
+    ],
+  },
 ];
+
+const navItems: NavItem[] = navGroups.flatMap(g => g.items);
 
 const SIDEBAR_W = 220;
 const SIDEBAR_W_COLLAPSED = 60;
@@ -53,9 +86,14 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const userRole = currentWorkspace?.role as UserRole;
 
-  const filteredNav = navItems.filter(
-    (item) => !item.roles || item.roles.includes(userRole) || userRole === 'PLATFORM_ADMIN',
-  );
+  const filteredGroups = navGroups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter(
+        (item) => !item.roles || item.roles.includes(userRole) || userRole === 'PLATFORM_ADMIN',
+      ),
+    }))
+    .filter((g) => g.items.length > 0);
 
   const w = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W;
 
@@ -85,38 +123,52 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {filteredNav.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-lg transition-all duration-150',
-                collapsed ? 'px-2 py-2 justify-center' : 'px-3 py-2',
-                isActive
-                  ? 'text-amber-300'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-white/5',
-              )}
-              style={isActive ? { background: 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%)', borderLeft: '2px solid #F59E0B' } : {}}
-            >
-              <item.icon
-                className={cn('flex-shrink-0 h-4 w-4',
-                  isActive ? 'text-amber-400' : '')}
-              />
-              {!collapsed && (
-                <span className="text-[13px] font-medium truncate">{item.label}</span>
-              )}
-              {!collapsed && item.badge && item.badge > 0 && (
-                <span className="ml-auto text-[10px] bg-amber-500 text-white rounded-full px-1.5 py-0.5 font-medium leading-none">
-                  {item.badge > 99 ? '99+' : item.badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
+        {filteredGroups.map((group, gi) => (
+          <div key={gi} className={cn(gi > 0 && 'mt-4')}>
+            {!collapsed && group.label && (
+              <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                {group.label}
+              </div>
+            )}
+            {collapsed && group.label && gi > 0 && (
+              <div className="mx-3 mb-1.5 h-px bg-white/5" />
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg transition-all duration-150',
+                      collapsed ? 'px-2 py-2 justify-center' : 'px-3 py-2',
+                      isActive
+                        ? 'text-amber-300'
+                        : 'text-slate-400 hover:text-slate-100 hover:bg-white/5',
+                    )}
+                    style={isActive ? { background: 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%)', borderLeft: '2px solid #F59E0B' } : {}}
+                  >
+                    <item.icon
+                      className={cn('flex-shrink-0 h-4 w-4',
+                        isActive ? 'text-amber-400' : '')}
+                    />
+                    {!collapsed && (
+                      <span className="text-[13px] font-medium truncate">{item.label}</span>
+                    )}
+                    {!collapsed && item.badge && item.badge > 0 && (
+                      <span className="ml-auto text-[10px] bg-amber-500 text-white rounded-full px-1.5 py-0.5 font-medium leading-none">
+                        {item.badge > 99 ? '99+' : item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User footer */}
