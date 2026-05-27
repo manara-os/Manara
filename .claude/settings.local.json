@@ -272,7 +272,9 @@
       "Bash(echo \"Web restarting \\(PID $!\\)\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
       "Bash(curl -s -o /dev/null -w \"Web :3000 → %{http_code}\\\\n\" http://localhost:3000/)",
-      "Bash(curl -s -o /dev/null -w \"API :3001 → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)"
+      "Bash(curl -s -o /dev/null -w \"API :3001 → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(npx tsc *)"
     ]
   }
 }
