@@ -267,14 +267,24 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Sparkles className="w-7 h-7 text-amber-500" />
-          Reports & Analytics
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Real-time KPIs across operations, inventory, leasing and money. Refreshes every 60 seconds.
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Sparkles className="w-7 h-7 text-amber-500" />
+            Reports & Analytics
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Real-time KPIs across operations, inventory, leasing and money. Refreshes every 60 seconds.
+          </p>
+        </div>
+        <Link
+          href="/reports/ai"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
+        >
+          <Sparkles className="w-4 h-4" />
+          AI Intelligence Reports
+          <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">NEW</span>
+        </Link>
       </div>
 
       <MasterDashboard />

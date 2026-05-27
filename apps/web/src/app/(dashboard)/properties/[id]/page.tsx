@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { X, User2, ChevronRight, Trash2, Calendar, Globe, Wallet, Info, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { toast } from 'sonner';
 
 const OCCUPANCY_COLORS: Record<string, 'success' | 'warning' | 'secondary'> = {
@@ -324,6 +325,9 @@ export default function PropertyDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* AI Suggestions for this property */}
+      <AISuggestions surface="property" entityId={id} compact />
 
       {/* Photo Gallery */}
       {photos.length > 0 ? (

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Phone, Mail, Star, CheckCircle2, Clock, Wrench, Briefcase, MapPin } from 'lucide-react';
+import { AICallButton } from '@/components/ai/ai-call-button';
 import { toast } from 'sonner';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -87,6 +88,11 @@ export default function VendorDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <AICallButton
+            recipientType="vendor"
+            recipientId={vendor.id}
+            recipientName={vendor.companyName}
+          />
           {!vendor.isApproved && (
             <Button
               size="sm"

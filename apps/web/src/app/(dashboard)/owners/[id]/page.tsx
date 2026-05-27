@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReportDownloadButton } from '@/components/report-download-button';
 import { SendMessageButton } from '@/components/communications/send-message-button';
+import { AICallButton } from '@/components/ai/ai-call-button';
 import { PmaSigningPipeline } from '@/components/owners/pma-signing-pipeline';
 import { InvestorDashboard } from '@/components/owners/investor-dashboard';
+import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { Building2, TrendingUp, Home, Phone, Mail, Shield, Percent, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 
@@ -93,6 +95,11 @@ export default function OwnerDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 items-center flex-shrink-0">
+          <AICallButton
+            recipientType="owner"
+            recipientId={id}
+            recipientName={owner.fullName}
+          />
           <SendMessageButton
             recipientType="owner"
             recipientId={id}
@@ -210,6 +217,9 @@ export default function OwnerDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Suggestions for this owner */}
+      <AISuggestions surface="owner" entityId={id} />
 
       {/* PMA Signing Pipeline */}
       <PmaSigningPipeline ownerId={id} currentStage={owner.meta?.pmaSigningStage ?? (owner.pmaStatus === 'ACTIVE' ? 'ACTIVE' : 'DRAFT')} />

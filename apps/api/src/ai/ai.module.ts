@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { AiController } from './ai.controller';
 import { AiRentCallService } from './ai-rent-call.service';
+import { AiIntelligenceService } from './ai-intelligence.service';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
@@ -11,7 +12,7 @@ import { DatabaseModule } from '../database/database.module';
     BullModule.registerQueue({ name: 'notifications' }),
   ],
   controllers: [AiController],
-  providers: [AiRentCallService],
-  exports: [AiRentCallService],
+  providers: [AiRentCallService, AiIntelligenceService],
+  exports: [AiRentCallService, AiIntelligenceService],
 })
 export class AiModule {}

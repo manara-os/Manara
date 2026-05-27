@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReportDownloadButton } from '@/components/report-download-button';
 import { SendMessageButton } from '@/components/communications/send-message-button';
+import { AICallButton } from '@/components/ai/ai-call-button';
+import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { useState } from 'react';
 import { Building2, Home, FileText, ChevronRight } from 'lucide-react';
 
@@ -86,6 +88,11 @@ export default function TenantDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          <AICallButton
+            recipientType="tenant"
+            recipientId={id}
+            recipientName={tenant.fullName}
+          />
           <SendMessageButton
             recipientType="tenant"
             recipientId={id}
@@ -137,6 +144,9 @@ export default function TenantDetailPage() {
           )}
         </div>
       </div>
+
+      {/* AI Suggestions for this tenant */}
+      <AISuggestions surface="tenant" entityId={id} />
 
       {/* Active Lease Banner — fully clickable into related entities */}
       {activeLease && (

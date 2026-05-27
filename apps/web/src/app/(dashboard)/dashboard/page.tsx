@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RevenueChart } from '@/components/charts/revenue-chart';
 import { OccupancyChart } from '@/components/charts/occupancy-chart';
 import { OverdueTable } from '@/components/tables/overdue-table';
+import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { RecentTickets } from '@/components/tables/recent-tickets';
 import { useAuthStore } from '@/store/auth.store';
 import { financeApi, propertiesApi, ticketsApi, leasesApi, tenantsApi } from '@/lib/api';
@@ -141,6 +142,10 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
+
+      {/* AI Suggestions — top of dashboard */}
+      <AISuggestions surface="dashboard" title="What needs your attention today" />
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
