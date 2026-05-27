@@ -102,4 +102,40 @@ export class FinanceController {
   ) {
     return this.financeService.listCommissions(req.workspaceId, { status, leaseId });
   }
+
+  // ─── Accounting upgrade ────────────────────────────────────────────
+
+  @Get('chart-of-accounts')
+  @ApiOperation({ summary: 'UAE PM chart of accounts with live balances' })
+  @Roles(UserRole.PM_ADMIN)
+  getChartOfAccounts(@Request() req: any) {
+    return this.financeService.getChartOfAccounts(req.workspaceId);
+  }
+
+  @Get('journal-entries')
+  @ApiOperation({ summary: 'General ledger journal entries (synthesised from collections + expenses)' })
+  @Roles(UserRole.PM_ADMIN)
+  getJournalEntries(@Request() req: any, @Query('limit') limit?: string) {
+    return this.financeService.getJournalEntries(req.workspaceId, limit ? parseInt(limit, 10) : 50);
+  }
+
+  @Get('trust-accounts')
+  @ApiOperation({ summary: 'Owner trust account balances — segregated PM-side trust accounting' })
+  @Roles(UserRole.PM_ADMIN)
+  getTrustAccounts(@Request() req: any) {
+    return this.financeService.getTrustAccounts(req.workspaceId);
+  }
+
+  @Get('vat-report')
+  @ApiOperation({ summary: 'UAE 5% VAT quarterly report with TRN' })
+  @Roles(UserRole.PM_ADMIN)
+  getVatReport(
+    @Request() req: any,
+    @Query('year') year?: string,
+    @Query('quarter') quarter?: string,
+  ) {
+    const y = parseInt(year ?? String(new Date().getFullYear()), 10);
+    const q = quarter ? parseInt(quarter, 10) : undefined;
+    return this.financeService.getVatReport(req.workspaceId, y, q);
+  }
 }

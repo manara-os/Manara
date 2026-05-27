@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TrendingUp, AlertCircle, DollarSign, Receipt, Building2, X } from 'lucide-react';
 import { financeApi, leasesApi } from '@/lib/api';
@@ -362,6 +363,9 @@ export default function FinancePage() {
           <p className="text-xs text-gray-500 mt-0.5">Rent collections, PDC cheques & expenses</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="text-xs h-8" asChild>
+            <Link href="/finance/ledger">📒 General Ledger</Link>
+          </Button>
           <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setShowPaymentModal(true)}>
             Record Payment
           </Button>
