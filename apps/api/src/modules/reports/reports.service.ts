@@ -36,56 +36,87 @@ export class ReportsService {
     };
   }
 
-  async getRevenueReport(workspaceId: string, year: number, month?: number) {
-    const startDate = month
-      ? new Date(year, month - 1, 1)
-      : new Date(year, 0, 1);
-    const endDate = month
-      ? new Date(year, month, 0, 23, 59, 59)
-      : new Date(year, 11, 31, 23, 59, 59);
+  async getRevenueReport(workspaceId: string, year?: number, month?: number, period?: string) {
+    // Resolve date range: named period takes precedence over year/month
+    let startDate: Date;
+    let endDate: Date;
+    const now = new Date();
+    if (period === 'today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (period === 'week') {
+      startDate = new Date(now.getTime() - 7 * 86_400_000);
+      endDate = now;
+    } else if (period === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = now;
+    } else if (period === 'quarter') {
+      startDate = new Date(now.getTime() - 90 * 86_400_000);
+      endDate = now;
+    } else if (period === 'all') {
+      startDate = new Date(2020, 0, 1);
+      endDate = new Date(2099, 11, 31);
+    } else if (year) {
+      startDate = month ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      endDate = month ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
+    } else {
+      // Default: trailing 12 months
+      startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      endDate = now;
+    }
 
     const [collections, expenses] = await Promise.all([
       this.prisma.rentCollection.findMany({
         where: { workspaceId, collectedAt: { gte: startDate, lte: endDate } },
-        select: { amount: true, collectedAt: true },
+        select: { amount: true, collectedAt: true, vatAmount: true, method: true },
         orderBy: { collectedAt: 'desc' },
       }),
       this.prisma.expense.findMany({
         where: { workspaceId, expenseDate: { gte: startDate, lte: endDate } },
-        select: { amount: true, expenseDate: true, category: true, description: true },
+        select: { amount: true, expenseDate: true, category: true, description: true, vatAmount: true },
         orderBy: { expenseDate: 'desc' },
       }),
     ]);
 
     const totalRevenue = collections.reduce((sum, c) => sum + Number(c.amount), 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalVatCollected = collections.reduce((sum, c) => sum + Number(c.vatAmount ?? 0), 0);
+    const totalVatPaid = expenses.reduce((sum, e) => sum + Number(e.vatAmount ?? 0), 0);
 
-    // Build monthly breakdown
-    const monthlyMap = new Map<number, { revenue: number; expenses: number }>();
-    for (let m = 1; m <= 12; m++) monthlyMap.set(m, { revenue: 0, expenses: 0 });
+    // Build monthly breakdown (YYYY-MM keyed)
+    const monthlyMap = new Map<string, { month: string; revenue: number; expenses: number }>();
     for (const c of collections) {
-      const m = new Date(c.collectedAt).getMonth() + 1;
-      monthlyMap.get(m)!.revenue += Number(c.amount);
+      const key = new Date(c.collectedAt).toISOString().slice(0, 7);
+      const label = new Date(c.collectedAt).toLocaleDateString('en-AE', { month: 'short', year: '2-digit' });
+      const row = monthlyMap.get(key) ?? { month: label, revenue: 0, expenses: 0 };
+      row.revenue += Number(c.amount);
+      monthlyMap.set(key, row);
     }
     for (const e of expenses) {
-      const m = new Date(e.expenseDate).getMonth() + 1;
-      monthlyMap.get(m)!.expenses += Number(e.amount);
+      const key = new Date(e.expenseDate).toISOString().slice(0, 7);
+      const label = new Date(e.expenseDate).toLocaleDateString('en-AE', { month: 'short', year: '2-digit' });
+      const row = monthlyMap.get(key) ?? { month: label, revenue: 0, expenses: 0 };
+      row.expenses += Number(e.amount);
+      monthlyMap.set(key, row);
     }
-    const monthlyBreakdown = Array.from(monthlyMap.entries()).map(([month, d]) => ({
-      month,
-      revenue: d.revenue,
-      expenses: d.expenses,
-      net: d.revenue - d.expenses,
-    }));
+    const monthlyBreakdown = Array.from(monthlyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => ({ ...v, net: v.revenue - v.expenses }));
 
     return {
-      period: { start: startDate, end: endDate, year, month },
-      summary: {
-        totalRevenue,
-        totalExpenses,
-        netIncome: totalRevenue - totalExpenses,
-      },
+      period: { start: startDate, end: endDate, year, month, name: period ?? null },
+      // Top-level flat fields (used by frontend KPI tiles)
+      totalRevenue,
+      totalExpenses,
+      netIncome: totalRevenue - totalExpenses,
+      totalVatCollected,
+      totalVatPaid,
+      // Arrays (used by charts + breakdowns)
+      collections,
+      expenses,
       monthlyBreakdown,
+      // Nested copy (legacy / API consumers)
+      summary: { totalRevenue, totalExpenses, netIncome: totalRevenue - totalExpenses },
     };
   }
 

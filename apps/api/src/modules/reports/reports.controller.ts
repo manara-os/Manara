@@ -27,10 +27,11 @@ export class ReportsController {
     @Request() req: any,
     @Query('year') year?: string,
     @Query('month') month?: string,
+    @Query('period') period?: string,
   ) {
-    const y = parseInt(year ?? String(new Date().getFullYear()), 10);
+    const y = year ? parseInt(year, 10) : undefined;
     const m = month ? parseInt(month, 10) : undefined;
-    return this.reportsService.getRevenueReport(req.workspaceId, y, m);
+    return this.reportsService.getRevenueReport(req.workspaceId, y, m, period);
   }
 
   @Get('maintenance')

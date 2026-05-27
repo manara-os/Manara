@@ -80,9 +80,17 @@ export default function OwnerDetailPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-700 self-start mt-1">←</button>
-          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg flex-shrink-0">
-            {initials}
-          </div>
+          {(owner.avatarUrl ?? owner.meta?.avatarUrl) ? (
+            <img
+              src={owner.avatarUrl ?? owner.meta?.avatarUrl}
+              alt={owner.fullName}
+              className="w-14 h-14 rounded-full object-cover flex-shrink-0 ring-2 ring-amber-200"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-semibold text-gray-900">{owner.fullName}</h1>
@@ -167,6 +175,53 @@ export default function OwnerDetailPage() {
         </div>
       )}
 
+      {/* Identity Documents row */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Shield className="w-4 h-4 text-blue-600" /> Identity & Documents
+          <Badge variant="outline" className="text-[10px] ml-1">{owner.kycVerified ? 'KYC Verified' : 'Pending verification'}</Badge>
+        </CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Owner photo */}
+            <DocCard
+              label="Owner photo"
+              imageUrl={owner.avatarUrl ?? owner.meta?.avatarUrl}
+              fallback={owner.fullName?.split(' ').map((s: string) => s[0]).join('').slice(0, 2)}
+              meta={owner.fullName}
+              status="verified"
+            />
+            {/* Passport */}
+            <DocCard
+              label="Passport"
+              imageUrl={owner.meta?.passportImageUrl}
+              fallback="🛂"
+              meta={owner.passportNo ? `No. ${owner.passportNo}` : 'Not uploaded'}
+              status={owner.passportNo ? 'verified' : 'missing'}
+              expiry={owner.passportExpiry ? new Date(owner.passportExpiry) : null}
+            />
+            {/* Emirates ID */}
+            <DocCard
+              label="Emirates ID"
+              imageUrl={owner.meta?.emiratesIdImageUrl}
+              fallback="🪪"
+              meta={owner.emiratesId ? `${owner.emiratesId.slice(0, 4)}-***-${owner.emiratesId.slice(-4)}` : 'Not uploaded'}
+              status={owner.emiratesId ? 'verified' : 'missing'}
+              expiry={owner.emiratesIdExpiry ? new Date(owner.emiratesIdExpiry) : null}
+            />
+            {/* Residency visa */}
+            <DocCard
+              label="Residency Visa"
+              imageUrl={owner.meta?.visaImageUrl}
+              fallback="📜"
+              meta={owner.residencyVisaNo ? `No. ${owner.residencyVisaNo}` : 'Not applicable'}
+              status={owner.residencyVisaNo ? 'verified' : 'missing'}
+              expiry={owner.residencyVisaExpiry ? new Date(owner.residencyVisaExpiry) : null}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Info + Properties */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
@@ -175,7 +230,10 @@ export default function OwnerDetailPage() {
             {[
               ['Nationality', owner.nationality ?? '—'],
               ['Emirates ID', owner.emiratesId ?? '—'],
+              ['Passport No.', owner.passportNo ?? '—'],
               ['KYC Type', owner.kycType ?? '—'],
+              ['Bank', owner.bankName ?? '—'],
+              ['IBAN', owner.bankIban ? `${owner.bankIban.slice(0, 6)}***${owner.bankIban.slice(-4)}` : '—'],
               ['Management Fee', `${owner.mgmtFeePct ?? 5}%`],
               ['PMA Signed', owner.pmaSignedDate ? new Date(owner.pmaSignedDate).toLocaleDateString('en-AE') : '—'],
               ['PMA Expiry', owner.pmaExpiryDate ? new Date(owner.pmaExpiryDate).toLocaleDateString('en-AE') : '—'],
@@ -310,6 +368,56 @@ export default function OwnerDetailPage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// ───────────────────────── DocCard ─────────────────────────
+function DocCard({
+  label,
+  imageUrl,
+  fallback,
+  meta,
+  status,
+  expiry,
+}: {
+  label: string;
+  imageUrl?: string | null;
+  fallback: string;
+  meta?: string;
+  status: 'verified' | 'missing';
+  expiry?: Date | null;
+}) {
+  const verified = status === 'verified';
+  const daysToExpiry = expiry ? Math.floor((expiry.getTime() - Date.now()) / 86_400_000) : null;
+  const isExpiringSoon = daysToExpiry !== null && daysToExpiry > 0 && daysToExpiry <= 60;
+  const isExpired = daysToExpiry !== null && daysToExpiry < 0;
+
+  return (
+    <div className="border border-gray-100 rounded-lg overflow-hidden bg-white">
+      <div className="aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 relative flex items-center justify-center">
+        {imageUrl ? (
+          <img src={imageUrl} alt={label} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-4xl text-gray-300">{fallback}</div>
+        )}
+        <div className="absolute top-2 right-2">
+          {verified ? (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold">✓ ON FILE</span>
+          ) : (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold">⚠ MISSING</span>
+          )}
+        </div>
+      </div>
+      <div className="p-2.5">
+        <p className="text-[10px] uppercase tracking-wide font-bold text-gray-500">{label}</p>
+        <p className="text-xs text-gray-900 mt-0.5 truncate">{meta ?? '—'}</p>
+        {daysToExpiry !== null && (
+          <p className={`text-[10px] mt-0.5 ${isExpired ? 'text-red-600 font-semibold' : isExpiringSoon ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>
+            {isExpired ? `Expired ${Math.abs(daysToExpiry)}d ago` : `Expires in ${daysToExpiry}d`}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

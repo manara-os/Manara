@@ -253,14 +253,22 @@ function MasterDashboard() {
 // Main page: master dashboard + legacy detail tabs
 // ─────────────────────────────────────────────────────────────────────
 
+const PERIOD_PRESETS: { key: string; label: string }[] = [
+  { key: 'today',   label: 'Today' },
+  { key: 'week',    label: 'Last 7 days' },
+  { key: 'month',   label: 'This month' },
+  { key: 'quarter', label: 'Last 90 days' },
+  { key: '',        label: 'Trailing 12mo' },
+  { key: 'all',     label: 'All time' },
+];
+
 export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>('occupancy');
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState<number | undefined>();
+  const [periodPreset, setPeriodPreset] = useState<string>(''); // empty = trailing 12mo
 
   const { data, isLoading } = useQuery({
-    queryKey: ['report', activeReport, year, month],
-    queryFn: () => api.get(`/reports/${activeReport}`, { params: { year, month } }),
+    queryKey: ['report', activeReport, periodPreset],
+    queryFn: () => api.get(`/reports/${activeReport}`, { params: periodPreset ? { period: periodPreset } : {} }),
   });
 
   const report: any = (data as any)?.data ?? data;
@@ -290,7 +298,28 @@ export default function ReportsPage() {
       <MasterDashboard />
 
       <div className="pt-4 border-t border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Detailed reports</h2>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">Detailed reports</h2>
+
+          {/* Global date period chips — apply to ALL detailed tabs */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wide text-gray-400 font-bold mr-1">Period:</span>
+            {PERIOD_PRESETS.map((p) => (
+              <button
+                key={p.key || 'default'}
+                onClick={() => setPeriodPreset(p.key)}
+                className={`text-[11px] px-2.5 py-1 rounded-full font-medium border transition-colors ${
+                  periodPreset === p.key
+                    ? 'bg-amber-600 text-white border-amber-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex gap-1 border-b border-gray-200 mb-4 flex-wrap">
           {REPORT_TABS.map((t) => (
             <button
@@ -306,18 +335,6 @@ export default function ReportsPage() {
             </button>
           ))}
         </div>
-
-        {activeReport === 'revenue' && (
-          <div className="flex gap-2 mb-3">
-            <select value={year} onChange={(e) => setYear(parseInt(e.target.value))} className="text-sm border border-gray-200 rounded px-2 py-1">
-              {[2024, 2025, 2026].map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <select value={month ?? ''} onChange={(e) => setMonth(e.target.value ? parseInt(e.target.value) : undefined)} className="text-sm border border-gray-200 rounded px-2 py-1">
-              <option value="">All months</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{new Date(2024, m - 1).toLocaleString('en-AE', { month: 'long' })}</option>)}
-            </select>
-          </div>
-        )}
 
         {isLoading ? (
           <Skeleton className="h-48" />
