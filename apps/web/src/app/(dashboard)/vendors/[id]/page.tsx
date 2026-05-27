@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Phone, Mail, Star, CheckCircle2, Clock, Wrench, Briefcase, MapPin } from 'lucide-react';
 import { AICallButton } from '@/components/ai/ai-call-button';
+import { VendorWallet } from '@/components/vendors/vendor-wallet';
+import { WhatsAppThread } from '@/components/communications/whatsapp-thread';
 import { toast } from 'sonner';
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -181,6 +183,12 @@ export default function VendorDetailPage() {
       </div>
 
       {/* Recent Tickets */}
+      {/* Vendor Wallet — earnings, payout schedule */}
+      <VendorWallet vendor={vendor} />
+
+      {/* WhatsApp 2-way thread */}
+      <WhatsAppThread recipientType="vendor" recipientName={vendor.companyName} recipientPhone={vendor.phone} />
+
       {vendor.tickets?.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-sm font-semibold">Recent Jobs</CardTitle></CardHeader>

@@ -13,7 +13,9 @@ import { SendMessageButton } from '@/components/communications/send-message-butt
 import { AICallButton } from '@/components/ai/ai-call-button';
 import { PmaSigningPipeline } from '@/components/owners/pma-signing-pipeline';
 import { InvestorDashboard } from '@/components/owners/investor-dashboard';
+import { MarketIntel } from '@/components/owners/market-intel';
 import { AISuggestions } from '@/components/ai/ai-suggestions';
+import { WhatsAppThread } from '@/components/communications/whatsapp-thread';
 import { Building2, TrendingUp, Home, Phone, Mail, Shield, Percent, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 
@@ -226,6 +228,12 @@ export default function OwnerDetailPage() {
 
       {/* Investor Dashboard — asset-level ROI, P&L, YoY, occupancy heat */}
       {portfolio && <InvestorDashboard portfolio={portfolio} />}
+
+      {/* Market Intel — live RERA + Bayut/PF comparables */}
+      {portfolio && <MarketIntel portfolio={portfolio} />}
+
+      {/* WhatsApp 2-way thread with AI in the loop */}
+      <WhatsAppThread recipientType="owner" recipientName={owner.fullName} recipientPhone={owner.phone} />
 
       {/* Unit Grid */}
       {(portfolio?.owner?.properties ?? []).length > 0 && (

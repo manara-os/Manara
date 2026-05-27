@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { leasesApi, integrationsApi } from '@/lib/api';
 import { InspectionChecklist } from '@/components/inspections/inspection-checklist';
 import { RenewalContractFlow } from '@/components/leases/renewal-contract-flow';
+import { OnlinePayment } from '@/components/leases/online-payment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -352,7 +353,8 @@ export default function LeaseDetailPage() {
             {lease.ejariNumber ?? 'Ejari Pending'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {lease.status === 'ACTIVE' && <OnlinePayment lease={lease} />}
           {lease.status === 'ACTIVE' && !lease.ejariNumber && (
             <Button size="sm" variant="outline" onClick={() => ejariMutation.mutate()} disabled={ejariMutation.isPending}>
               {ejariMutation.isPending ? 'Registering...' : 'Register Ejari'}

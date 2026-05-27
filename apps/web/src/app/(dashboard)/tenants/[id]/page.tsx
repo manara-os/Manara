@@ -13,6 +13,8 @@ import { ReportDownloadButton } from '@/components/report-download-button';
 import { SendMessageButton } from '@/components/communications/send-message-button';
 import { AICallButton } from '@/components/ai/ai-call-button';
 import { AISuggestions } from '@/components/ai/ai-suggestions';
+import { TenantScreeningButton } from '@/components/tenants/tenant-screening';
+import { WhatsAppThread } from '@/components/communications/whatsapp-thread';
 import { useState } from 'react';
 import { Building2, Home, FileText, ChevronRight } from 'lucide-react';
 
@@ -88,6 +90,7 @@ export default function TenantDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 items-center">
+          <TenantScreeningButton tenantId={id} tenantName={tenant.fullName} />
           <AICallButton
             recipientType="tenant"
             recipientId={id}
@@ -210,6 +213,9 @@ export default function TenantDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* WhatsApp 2-way thread with AI agent in the loop */}
+      <WhatsAppThread recipientType="tenant" recipientName={tenant.fullName} recipientPhone={tenant.phone} />
 
       {/* All leases history — if more than one */}
       {tenant.leases && tenant.leases.length > 1 && (
