@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ReportDownloadButton } from '@/components/report-download-button';
 import { SendMessageButton } from '@/components/communications/send-message-button';
 import { PmaSigningPipeline } from '@/components/owners/pma-signing-pipeline';
+import { InvestorDashboard } from '@/components/owners/investor-dashboard';
 import { Building2, TrendingUp, Home, Phone, Mail, Shield, Percent, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 
@@ -212,6 +213,9 @@ export default function OwnerDetailPage() {
 
       {/* PMA Signing Pipeline */}
       <PmaSigningPipeline ownerId={id} currentStage={owner.meta?.pmaSigningStage ?? (owner.pmaStatus === 'ACTIVE' ? 'ACTIVE' : 'DRAFT')} />
+
+      {/* Investor Dashboard — asset-level ROI, P&L, YoY, occupancy heat */}
+      {portfolio && <InvestorDashboard portfolio={portfolio} />}
 
       {/* Unit Grid */}
       {(portfolio?.owner?.properties ?? []).length > 0 && (

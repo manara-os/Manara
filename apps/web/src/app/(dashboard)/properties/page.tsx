@@ -30,11 +30,18 @@ export default function PropertiesPage() {
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Properties</h1>
           <p className="text-sm text-gray-500 mt-0.5">{properties.length} properties managed</p>
         </div>
-        <Button asChild>
-          <Link href="/properties/new">
-            <Plus className="w-4 h-4 mr-2" /> Add Property
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/properties/new">
+              <Plus className="w-4 h-4 mr-2" /> Quick add
+            </Link>
+          </Button>
+          <Button asChild className="bg-amber-600 hover:bg-amber-700">
+            <Link href="/onboarding/new-property">
+              ✨ Onboard property
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

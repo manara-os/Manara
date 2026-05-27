@@ -262,7 +262,10 @@
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ pip3 install pypdf --quiet)",
       "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ DATABASE_URL=postgresql://manara:manara_dev_pass@localhost:5432/manara_os?schema=public npx tsx seed_listings.ts)",
       "Bash(curl -s -o /dev/null -w \"API:%{http_code} Web:\" http://localhost:3001/api/v1/health)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(echo \"Started API \\(PID $!\\)\")",
+      "Bash(PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:__TRACKED_VAR__ nohup npm run start:dev)",
+      "Bash(disown)"
     ]
   }
 }
