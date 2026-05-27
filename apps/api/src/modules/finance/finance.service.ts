@@ -361,7 +361,6 @@ export class FinanceService {
       }),
       this.prisma.expense.findMany({
         where: { workspaceId },
-        include: { property: { select: { name: true } } },
         orderBy: { expenseDate: 'desc' },
         take: limit,
       }),
@@ -397,7 +396,7 @@ export class FinanceService {
         id: `JE-EX-${e.id}`,
         date: e.expenseDate,
         ref: `EX-${e.id.slice(0, 8)}`,
-        description: `${e.category} — ${e.description ?? e.property?.name ?? '—'}`,
+        description: `${e.category} — ${e.description ?? '—'}`,
         lines: [
           { account, accountName, debit: amt, credit: 0 },
           { account: '1010', accountName: 'Cash – Operating', debit: 0, credit: amt },
@@ -420,7 +419,7 @@ export class FinanceService {
               include: {
                 leases: {
                   where: { status: 'ACTIVE' },
-                  include: { collections: { select: { amount: true, collectedAt: true } } },
+                  include: { rentCollections: { select: { amount: true, collectedAt: true } } },
                 },
               },
             },
@@ -431,7 +430,7 @@ export class FinanceService {
 
     return owners.map(o => {
       const allCollections = o.properties.flatMap(p =>
-        p.units.flatMap(u => u.leases.flatMap(l => l.collections)),
+        p.units.flatMap(u => u.leases.flatMap(l => l.rentCollections)),
       );
       const gross = allCollections.reduce((s, c) => s + Number(c.amount), 0);
       const mgmtFeePct = Number(o.mgmtFeePct ?? 5) / 100;
