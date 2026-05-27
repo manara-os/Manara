@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
+import { BidMarketplace } from '@/components/tickets/bid-marketplace';
 
 const PRIORITY_COLORS = {
   EMERGENCY: 'destructive',
@@ -151,6 +152,16 @@ export default function TicketDetailPage() {
                 <p className="text-amber-700 text-sm">{ticket.resolutionNote}</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Bid Marketplace — vendors auto-bid on open tickets */}
+          {(ticket.status === 'OPEN' || ticket.status === 'ASSIGNED') && (
+            <BidMarketplace
+              ticketRef={ticket.ticketRef}
+              ticketTitle={ticket.title}
+              category={ticket.category}
+              status={ticket.status}
+            />
           )}
         </div>
 

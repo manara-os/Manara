@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import { VendorLeaderboard } from '@/components/vendors/vendor-leaderboard';
 
 const CATEGORY_COLORS: Record<string, string> = {
   PLUMBING: 'bg-blue-100 text-blue-700',
@@ -47,6 +48,11 @@ export default function VendorsPage() {
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input placeholder="Search vendors..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-xs" />
+      </div>
+
+      {/* Vendor performance leaderboard — top of page */}
+      <div className="mb-5">
+        <VendorLeaderboard />
       </div>
 
       {isLoading ? (

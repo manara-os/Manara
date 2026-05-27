@@ -14,6 +14,7 @@ import { SendMessageButton } from '@/components/communications/send-message-butt
 import { AICallButton } from '@/components/ai/ai-call-button';
 import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { TenantScreeningButton } from '@/components/tenants/tenant-screening';
+import { AecbCreditReporting } from '@/components/tenants/aecb-credit-reporting';
 import { WhatsAppThread } from '@/components/communications/whatsapp-thread';
 import { useState } from 'react';
 import { Building2, Home, FileText, ChevronRight } from 'lucide-react';
@@ -213,6 +214,9 @@ export default function TenantDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* AECB Credit Reporting opt-in — build credit with on-time rent */}
+      <AecbCreditReporting tenantName={tenant.fullName} />
 
       {/* WhatsApp 2-way thread with AI agent in the loop */}
       <WhatsAppThread recipientType="tenant" recipientName={tenant.fullName} recipientPhone={tenant.phone} />

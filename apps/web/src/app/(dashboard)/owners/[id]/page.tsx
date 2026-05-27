@@ -14,6 +14,9 @@ import { AICallButton } from '@/components/ai/ai-call-button';
 import { PmaSigningPipeline } from '@/components/owners/pma-signing-pipeline';
 import { InvestorDashboard } from '@/components/owners/investor-dashboard';
 import { MarketIntel } from '@/components/owners/market-intel';
+import { ReceiptVault } from '@/components/owners/receipt-vault';
+import { TaxCertificate } from '@/components/owners/tax-certificate';
+import { RoiSimulator } from '@/components/owners/roi-simulator';
 import { AISuggestions } from '@/components/ai/ai-suggestions';
 import { WhatsAppThread } from '@/components/communications/whatsapp-thread';
 import { Building2, TrendingUp, Home, Phone, Mail, Shield, Percent, CalendarRange } from 'lucide-react';
@@ -231,6 +234,15 @@ export default function OwnerDetailPage() {
 
       {/* Market Intel — live RERA + Bayut/PF comparables */}
       {portfolio && <MarketIntel portfolio={portfolio} />}
+
+      {/* ROI Simulator — renovation payback */}
+      <RoiSimulator baseAnnualRent={Number(summary?.totalAnnualRent ?? 140_000)} />
+
+      {/* Receipt Vault — every vendor invoice with before/after photos */}
+      <ReceiptVault ownerName={owner.fullName} />
+
+      {/* Tax Certificate — annual FTA-compliant income summary */}
+      <TaxCertificate ownerName={owner.fullName} ownerEmail={owner.email} />
 
       {/* WhatsApp 2-way thread with AI in the loop */}
       <WhatsAppThread recipientType="owner" recipientName={owner.fullName} recipientPhone={owner.phone} />

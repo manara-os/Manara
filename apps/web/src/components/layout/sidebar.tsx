@@ -21,6 +21,8 @@ import {
   MessageSquare,
   Lightbulb,
   Megaphone,
+  Shield,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -64,6 +66,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Finance',     href: '/finance',     icon: DollarSign,      roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Overdue',     href: '/overdue',     icon: AlertOctagon,    roles: ['PM_ADMIN', 'PM_OPS'] },
+      { label: 'Reviews & NPS', href: '/reviews',   icon: Star,            roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Reports',     href: '/reports',     icon: BarChart3,       roles: ['PM_ADMIN'] },
     ],
   },
@@ -71,6 +74,7 @@ const navGroups: NavGroup[] = [
     label: 'Workspace',
     items: [
       { label: 'Team',            href: '/team',             icon: UserPlus,    roles: ['PM_ADMIN'] },
+      { label: 'Compliance',      href: '/compliance',       icon: Shield,      roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Feature Requests', href: '/feature-requests', icon: Lightbulb,   roles: ['PM_ADMIN', 'PM_OPS'] },
       { label: 'Settings',        href: '/settings',         icon: Settings,    roles: ['PM_ADMIN'] },
     ],

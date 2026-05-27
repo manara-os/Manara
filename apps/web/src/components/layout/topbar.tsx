@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { financeApi } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { LanguageSwitcher } from './language-switcher';
 
 const ROLE_ICON: Record<string, any> = {
   PM_ADMIN: Crown,
@@ -90,6 +91,9 @@ export function Topbar() {
             </span>
           </Link>
         )}
+
+        {/* Language switcher */}
+        <LanguageSwitcher />
 
         {/* Notifications */}
         <button
