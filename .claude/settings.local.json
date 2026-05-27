@@ -285,7 +285,9 @@
       "Bash(kill 381)",
       "Bash(nohup node --enable-source-maps dist/main)",
       "Bash(echo \"PID $!\")",
-      "Bash(curl -s -o /dev/null -w \"API → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)"
+      "Bash(curl -s -o /dev/null -w \"API → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)",
+      "Bash(curl -s http://localhost:3001/api/v1/owners)",
+      "Bash(ps -p 559 -o lstart=)"
     ]
   }
 }

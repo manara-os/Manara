@@ -18,6 +18,9 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     if (!user) throw new ForbiddenException('Access denied');
 
+    // PLATFORM_ADMIN bypasses every role gate
+    if (user.role === UserRole.PLATFORM_ADMIN) return true;
+
     const hasRole = requiredRoles.some((role) => user.role === role);
     if (!hasRole) {
       throw new ForbiddenException(

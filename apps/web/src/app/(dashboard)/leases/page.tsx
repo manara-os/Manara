@@ -16,9 +16,12 @@ export default function LeasesPage() {
   const [status, setStatus] = useState('ACTIVE');
   const [search, setSearch] = useState('');
 
+  // Map UI status → DB enum (DB uses PENDING_EJARI but UI shows "Pending")
+  const dbStatus = status === 'PENDING' ? 'PENDING_EJARI' : status;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['leases', status],
-    queryFn: () => leasesApi.list({ status }),
+    queryKey: ['leases', dbStatus],
+    queryFn: () => leasesApi.list({ status: dbStatus }),
     staleTime: 60 * 1000,
   });
 

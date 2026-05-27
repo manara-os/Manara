@@ -16,14 +16,25 @@ export default function OverduePage() {
     queryFn: () => financeApi.getOverdue(),
   });
 
-  const items: any[] = (data as any)?.data ?? data ?? [];
+  const rawItems: any[] = (data as any)?.data ?? data ?? [];
+
+  // Compute daysOverdue from dueDate
+  const now = Date.now();
+  const items = rawItems.map((i) => ({
+    ...i,
+    daysOverdue: i.dueDate ? Math.max(0, Math.floor((now - new Date(i.dueDate).getTime()) / 86_400_000)) : (i.daysOverdue ?? 0),
+    tenantName: i.lease?.tenant?.fullName ?? i.tenantName ?? '—',
+    tenantPhone: i.lease?.tenant?.phone ?? i.tenantPhone ?? '—',
+    unitNumber: i.lease?.unit?.unitNumber ?? i.unitNumber ?? '—',
+    propertyName: i.lease?.unit?.property?.name ?? '',
+  }));
 
   const totalAmount = items.reduce((sum, i) => sum + Number(i.amount ?? 0), 0);
   const buckets = {
-    '1-7':   items.filter((i) => (i.daysOverdue ?? 0) <= 7).length,
-    '8-30':  items.filter((i) => (i.daysOverdue ?? 0) > 7 && (i.daysOverdue ?? 0) <= 30).length,
-    '31-60': items.filter((i) => (i.daysOverdue ?? 0) > 30 && (i.daysOverdue ?? 0) <= 60).length,
-    '60+':   items.filter((i) => (i.daysOverdue ?? 0) > 60).length,
+    '1-10':  items.filter((i) => i.daysOverdue >= 1  && i.daysOverdue <= 10).length,
+    '11-20': items.filter((i) => i.daysOverdue >= 11 && i.daysOverdue <= 20).length,
+    '21-30': items.filter((i) => i.daysOverdue >= 21 && i.daysOverdue <= 30).length,
+    '30+':   items.filter((i) => i.daysOverdue > 30).length,
   };
 
   return (
@@ -51,29 +62,29 @@ export default function OverduePage() {
         </Card>
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">1–7 days</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['1-7']}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">1–10 days</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['1-10']}</p>
             <p className="text-xs text-amber-600 mt-1">Reminder stage</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">8–30 days</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['8-30']}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">11–20 days</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['11-20']}</p>
             <p className="text-xs text-orange-600 mt-1">Escalation 1</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">31–60 days</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['31-60']}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">21–30 days</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{buckets['21-30']}</p>
             <p className="text-xs text-red-500 mt-1">Escalation 2</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">60+ days</p>
-            <p className="text-2xl font-bold text-red-600 mt-1">{buckets['60+']}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">30+ days</p>
+            <p className="text-2xl font-bold text-red-600 mt-1">{buckets['30+']}</p>
             <p className="text-xs text-red-700 mt-1">Legal review</p>
           </CardContent>
         </Card>
@@ -118,25 +129,28 @@ export default function OverduePage() {
                 {items.map((item: any) => {
                   const days = item.daysOverdue ?? 0;
                   const bucketColor =
-                    days <= 7 ? 'bg-amber-100 text-amber-700' :
-                    days <= 30 ? 'bg-orange-100 text-orange-700' :
-                    days <= 60 ? 'bg-red-100 text-red-700' :
+                    days <= 10 ? 'bg-amber-100 text-amber-700' :
+                    days <= 20 ? 'bg-orange-100 text-orange-700' :
+                    days <= 30 ? 'bg-red-100 text-red-700' :
                     'bg-red-200 text-red-900';
+                  const tenant = item.lease?.tenant ?? item.tenant ?? {};
+                  const unit = item.lease?.unit ?? item.unit ?? {};
+                  const property = unit.property ?? {};
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-5 py-3">
-                        <Link href={`/tenants/${item.tenantId ?? item.tenant?.id}`} className="text-amber-600 hover:underline font-medium">
-                          {item.tenant?.fullName ?? 'Unknown'}
+                        <Link href={`/tenants/${item.lease?.tenantId ?? tenant.id ?? ''}`} className="text-amber-600 hover:underline font-medium">
+                          {tenant.fullName ?? 'Unknown'}
                         </Link>
-                        <p className="text-xs text-gray-500 mt-0.5">{item.tenant?.phone}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{tenant.phone}</p>
                       </td>
                       <td className="px-5 py-3 text-xs text-gray-600">
-                        {item.unit?.unitNumber && (
-                          <Link href={`/units/${item.unit?.id ?? item.unitId}`} className="text-amber-600 hover:underline">
-                            {item.unit.unitNumber}
+                        {unit.unitNumber && (
+                          <Link href={`/units/${unit.id ?? ''}`} className="text-amber-600 hover:underline">
+                            {unit.unitNumber}
                           </Link>
                         )}
-                        <p className="text-xs text-gray-500 mt-0.5">{item.unit?.property?.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{property.name}</p>
                       </td>
                       <td className="px-5 py-3 font-semibold text-red-600">
                         AED {Number(item.amount ?? 0).toLocaleString()}
@@ -152,21 +166,21 @@ export default function OverduePage() {
                       <td className="px-5 py-3">
                         <div className="flex gap-1">
                           <button
-                            onClick={() => toast.success(`WhatsApp reminder sent to ${item.tenant?.fullName}`)}
+                            onClick={() => toast.success(`WhatsApp reminder sent to ${tenant.fullName}`)}
                             className="p-1.5 rounded hover:bg-emerald-100 text-emerald-600"
                             title="Send WhatsApp"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => toast.success(`Email reminder sent to ${item.tenant?.fullName}`)}
+                            onClick={() => toast.success(`Email reminder sent to ${tenant.fullName}`)}
                             className="p-1.5 rounded hover:bg-blue-100 text-blue-600"
                             title="Send email"
                           >
                             <Mail className="w-3.5 h-3.5" />
                           </button>
                           <a
-                            href={`tel:${item.tenant?.phone}`}
+                            href={`tel:${tenant.phone}`}
                             className="p-1.5 rounded hover:bg-amber-100 text-amber-600"
                             title="Call"
                           >
