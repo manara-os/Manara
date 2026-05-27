@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { TrendingUp, AlertCircle, DollarSign, Receipt, Building2, X } from 'lucide-react';
-import { financeApi, leasesApi } from '@/lib/api';
+import { financeApi, leasesApi, propertiesApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -150,10 +150,17 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({
     description: '',
     category: 'MAINTENANCE',
+    propertyId: '',
     amount: '',
     expenseDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
+
+  const { data: propertiesData } = useQuery({
+    queryKey: ['properties-for-expense'],
+    queryFn: () => propertiesApi.list(),
+  });
+  const properties: any[] = (propertiesData as any)?.data ?? (propertiesData as any) ?? [];
 
   const mutation = useMutation({
     mutationFn: (data: any) => financeApi.createExpense(data),
@@ -168,11 +175,12 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.description || !form.amount) {
-      toast.error('Description and amount are required');
+    if (!form.description || !form.amount || !form.propertyId) {
+      toast.error('Property, description and amount are required');
       return;
     }
     mutation.mutate({
+      propertyId: form.propertyId,
       description: form.description,
       category: form.category,
       amount: parseFloat(form.amount),
@@ -189,6 +197,19 @@ function AddExpenseModal({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div className="space-y-1.5">
+            <Label>Property <span className="text-red-500">*</span></Label>
+            <select
+              value={form.propertyId}
+              onChange={e => setForm(f => ({ ...f, propertyId: e.target.value }))}
+              className="w-full h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">— select property —</option>
+              {properties.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.name}{p.area ? ` · ${p.area}` : ''}</option>
+              ))}
+            </select>
+          </div>
           <div className="space-y-1.5">
             <Label>Description <span className="text-red-500">*</span></Label>
             <Input

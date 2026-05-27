@@ -18,14 +18,20 @@ export class WorkspaceGuard implements CanActivate {
 
     if (!user) throw new ForbiddenException();
 
-    // Platform admins bypass workspace checks
-    if (user.role === UserRole.PLATFORM_ADMIN) return true;
-
-    // Get workspace from params, query, or header
+    // Get workspace from params, query, header, or token
     const workspaceId =
       request.params?.workspaceId ||
       request.headers['x-workspace-id'] ||
       user.workspaceId;
+
+    // Platform admins bypass workspace MEMBERSHIP check, but still need
+    // workspaceId in the request so services can scope their queries.
+    if (user.role === UserRole.PLATFORM_ADMIN) {
+      if (!workspaceId) throw new ForbiddenException('Workspace context required (X-Workspace-ID header)');
+      request.workspaceId = workspaceId;
+      request.user.workspaceId = workspaceId;
+      return true;
+    }
 
     if (!workspaceId) throw new ForbiddenException('Workspace context required');
 

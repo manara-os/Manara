@@ -74,9 +74,17 @@ export default function TenantDetailPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-700 self-start mt-1">←</button>
-          <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg">
-            {initials}
-          </div>
+          {(tenant.avatarUrl ?? tenant.meta?.avatarUrl) ? (
+            <img
+              src={tenant.avatarUrl ?? tenant.meta?.avatarUrl}
+              alt={tenant.fullName}
+              className="w-14 h-14 rounded-full object-cover ring-2 ring-amber-200"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg">
+              {initials}
+            </div>
+          )}
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold text-gray-900">{tenant.fullName}</h1>
@@ -274,17 +282,70 @@ export default function TenantDetailPage() {
           <CardContent className="space-y-3">
             {[
               ['Nationality', tenant.nationality ?? '—'],
+              ['Date of birth', tenant.meta?.dateOfBirth ?? '—'],
+              ['Marital status', tenant.meta?.maritalStatus ?? '—'],
+              ['Family size', tenant.meta?.familySize ?? '—'],
+              ['Preferred language', tenant.meta?.preferredLanguage ?? 'English'],
               ['Emirates ID', tenant.emiratesId ?? '—'],
               ['Passport No.', tenant.passportNo ?? '—'],
               ['Email', tenant.email ?? '—'],
               ['Phone', tenant.phone],
-              ['KYC Verified', tenant.kycVerified ? `Yes — ${new Date(tenant.kycVerifiedAt).toLocaleDateString('en-AE')}` : 'No'],
+              ['KYC Verified', tenant.kycVerified && tenant.kycVerifiedAt ? `Yes — ${new Date(tenant.kycVerifiedAt).toLocaleDateString('en-AE')}` : tenant.kycVerified ? 'Yes' : 'No'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between text-sm">
                 <span className="text-gray-500">{label}</span>
                 <span className="font-medium text-gray-900">{value}</span>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Employment & Emergency Contact */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Employment & Emergency Contact</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {tenant.meta?.employer ? (
+              <div className="bg-blue-50/40 rounded-lg p-3 border border-blue-100">
+                <p className="text-[10px] uppercase tracking-wide font-bold text-blue-700 mb-1">Employer</p>
+                <p className="font-semibold text-gray-900 text-sm">{tenant.meta.employer.name ?? '—'}</p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-xs">
+                  <div><span className="text-gray-500">Industry:</span> <span className="text-gray-900">{tenant.meta.employer.industry ?? '—'}</span></div>
+                  <div><span className="text-gray-500">Position:</span> <span className="text-gray-900">{tenant.meta.employer.position ?? '—'}</span></div>
+                  {tenant.meta.employer.salary && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">Monthly salary:</span>{' '}
+                      <span className="font-semibold text-emerald-700">AED {Number(tenant.meta.employer.salary).toLocaleString('en-AE')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic">No employment information on file.</p>
+            )}
+
+            {tenant.emergencyContact && Object.keys(tenant.emergencyContact).length > 0 ? (
+              <div className="bg-rose-50/40 rounded-lg p-3 border border-rose-100">
+                <p className="text-[10px] uppercase tracking-wide font-bold text-rose-700 mb-1">Emergency contact</p>
+                <p className="font-semibold text-gray-900 text-sm">{tenant.emergencyContact.name ?? '—'}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{tenant.emergencyContact.relationship ?? '—'}</p>
+                <div className="flex flex-wrap gap-3 mt-2 text-xs">
+                  {tenant.emergencyContact.phone && (
+                    <a href={`tel:${tenant.emergencyContact.phone}`} className="text-rose-700 hover:underline">📞 {tenant.emergencyContact.phone}</a>
+                  )}
+                  {tenant.emergencyContact.email && (
+                    <a href={`mailto:${tenant.emergencyContact.email}`} className="text-rose-700 hover:underline">✉ {tenant.emergencyContact.email}</a>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic">No emergency contact on file.</p>
+            )}
+
+            {tenant.meta?.movedToUaeYear && (
+              <p className="text-[11px] text-gray-500 pt-1 border-t border-gray-100">
+                🇦🇪 In the UAE since {tenant.meta.movedToUaeYear}
+              </p>
+            )}
           </CardContent>
         </Card>
 

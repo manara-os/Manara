@@ -20,7 +20,10 @@ import { CheckCircle2, Circle, Clock, ArrowRight, Home, Wrench, FileCheck } from
 
 const STATUS_COLORS: Record<string, any> = {
   ACTIVE: 'success',
-  PENDING: 'warning',
+  PENDING_EJARI: 'warning',
+  PENDING: 'warning',     // legacy fallback
+  DRAFT: 'secondary',
+  RENEWED: 'success',
   EXPIRED: 'secondary',
   TERMINATED: 'destructive',
 };

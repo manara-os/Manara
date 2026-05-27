@@ -51,9 +51,17 @@ export default function OwnersPage() {
               <Link href={`/owners/${owner.id}`}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer p-5">
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-sm font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">
-                      {getInitials(owner.fullName)}
-                    </div>
+                    {(owner.avatarUrl ?? owner.meta?.avatarUrl) ? (
+                      <img
+                        src={owner.avatarUrl ?? owner.meta?.avatarUrl}
+                        alt={owner.fullName}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-amber-100"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-sm font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0">
+                        {getInitials(owner.fullName)}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 dark:text-white truncate">{owner.fullName}</div>
                       <div className="text-xs text-gray-500">{owner.nationality ?? 'Owner'}</div>

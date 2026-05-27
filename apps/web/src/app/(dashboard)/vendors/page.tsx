@@ -13,13 +13,21 @@ import Link from 'next/link';
 import { VendorLeaderboard } from '@/components/vendors/vendor-leaderboard';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  PLUMBING: 'bg-blue-100 text-blue-700',
-  ELECTRICAL: 'bg-yellow-100 text-yellow-700',
-  AC: 'bg-cyan-100 text-cyan-700',
-  PAINTING: 'bg-pink-100 text-pink-700',
-  PEST_CONTROL: 'bg-green-100 text-green-700',
-  CLEANING: 'bg-amber-100 text-amber-700',
-  GENERAL: 'bg-gray-100 text-gray-700',
+  PLUMBING:    'bg-blue-100 text-blue-700',
+  ELECTRICAL:  'bg-yellow-100 text-yellow-700',
+  AC_HVAC:     'bg-cyan-100 text-cyan-700',
+  PAINTING:    'bg-pink-100 text-pink-700',
+  PEST_CONTROL:'bg-green-100 text-green-700',
+  CLEANING:    'bg-amber-100 text-amber-700',
+  CARPENTRY:   'bg-orange-100 text-orange-700',
+  LANDSCAPING: 'bg-lime-100 text-lime-700',
+  APPLIANCE:   'bg-indigo-100 text-indigo-700',
+  SECURITY:    'bg-red-100 text-red-700',
+  ELEVATOR:    'bg-violet-100 text-violet-700',
+  POOL:        'bg-sky-100 text-sky-700',
+  GYM:         'bg-rose-100 text-rose-700',
+  STRUCTURAL:  'bg-stone-100 text-stone-700',
+  OTHER:       'bg-gray-100 text-gray-700',
 };
 
 export default function VendorsPage() {
@@ -66,12 +74,27 @@ export default function VendorsPage() {
               <Link href={`/vendors/${vendor.id}`}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer p-5">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-                      <Briefcase className="w-5 h-5 text-amber-600" />
-                    </div>
+                    {(vendor.avatarUrl ?? vendor.meta?.logoUrl ?? vendor.meta?.avatarUrl) ? (
+                      <img
+                        src={vendor.avatarUrl ?? vendor.meta?.logoUrl ?? vendor.meta?.avatarUrl}
+                        alt={vendor.companyName}
+                        className="w-10 h-10 rounded-xl object-cover flex-shrink-0 ring-1 ring-amber-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 text-xs font-bold text-amber-700">
+                        {vendor.companyName?.split(/\s+/).map((s: string) => s[0]).slice(0, 2).join('').toUpperCase() ?? <Briefcase className="w-5 h-5 text-amber-600" />}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 dark:text-white truncate">{vendor.companyName}</div>
-                      <div className="text-xs text-gray-500">{vendor.contactName}</div>
+                      <div className="text-xs text-gray-500 truncate">{vendor.contactName}</div>
+                      {vendor.rating != null && Number(vendor.rating) > 0 && (
+                        <div className="flex items-center gap-0.5 mt-0.5">
+                          <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          <span className="text-[11px] font-semibold text-gray-700">{Number(vendor.rating).toFixed(1)}</span>
+                          <span className="text-[10px] text-gray-400 ml-1">{vendor.totalJobsCompleted ?? 0} jobs</span>
+                        </div>
+                      )}
                     </div>
                     <Badge variant={vendor.isApproved ? 'success' : 'warning'} className="text-xs flex-shrink-0">
                       {vendor.isApproved ? 'Approved' : 'Pending'}

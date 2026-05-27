@@ -47,23 +47,8 @@ const seedReviews = (): Review[] => {
   ];
 };
 
-const monthlyRatings = [
-  { month: 'Dec', rating: 4.2, count: 8 },
-  { month: 'Jan', rating: 4.4, count: 12 },
-  { month: 'Feb', rating: 4.5, count: 15 },
-  { month: 'Mar', rating: 4.6, count: 18 },
-  { month: 'Apr', rating: 4.5, count: 22 },
-  { month: 'May', rating: 4.7, count: 19 },
-];
-
-const npsHistory = [
-  { month: 'Dec', nps: 32 },
-  { month: 'Jan', nps: 38 },
-  { month: 'Feb', nps: 45 },
-  { month: 'Mar', nps: 51 },
-  { month: 'Apr', nps: 48 },
-  { month: 'May', nps: 56 },
-];
+// Trend data is now computed from the actual reviews list at runtime
+// (see computeMonthlyTrends inside the page component).
 
 export default function ReviewsPage() {
   const qc = useQueryClient();
@@ -107,6 +92,40 @@ export default function ReviewsPage() {
     if (filter === 'UNRESPONDED') return !r.responded;
     return true;
   });
+
+  // Compute monthly trends from real reviews
+  const monthlyRatings = (() => {
+    const buckets = new Map<string, { sum: number; count: number; key: string }>();
+    for (const r of reviews) {
+      if (r.text.startsWith('NPS:')) continue;
+      const key = r.date.toISOString().slice(0, 7);
+      const label = r.date.toLocaleDateString('en-AE', { month: 'short' });
+      const row = buckets.get(label) ?? { sum: 0, count: 0, key };
+      row.sum += r.rating;
+      row.count++;
+      buckets.set(label, row);
+    }
+    return Array.from(buckets.entries())
+      .sort(([, a], [, b]) => a.key.localeCompare(b.key))
+      .map(([month, v]) => ({ month, rating: Number((v.sum / v.count).toFixed(2)), count: v.count }));
+  })();
+
+  const npsHistory = (() => {
+    const npsReviews = reviews.filter((r) => r.text.startsWith('NPS:'));
+    const buckets = new Map<string, { promoters: number; detractors: number; total: number; key: string }>();
+    for (const r of npsReviews) {
+      const key = r.date.toISOString().slice(0, 7);
+      const label = r.date.toLocaleDateString('en-AE', { month: 'short' });
+      const row = buckets.get(label) ?? { promoters: 0, detractors: 0, total: 0, key };
+      if (r.rating >= 9) row.promoters++;
+      else if (r.rating <= 6) row.detractors++;
+      row.total++;
+      buckets.set(label, row);
+    }
+    return Array.from(buckets.entries())
+      .sort(([, a], [, b]) => a.key.localeCompare(b.key))
+      .map(([month, v]) => ({ month, nps: v.total ? Math.round(((v.promoters - v.detractors) / v.total) * 100) : 0 }));
+  })();
 
   const avgRating = dashboard?.avgRating?.toFixed(1) ?? (reviews.filter((r) => !r.text.startsWith('NPS:')).reduce((s, r) => s + r.rating, 0) / Math.max(1, reviews.filter((r) => !r.text.startsWith('NPS:')).length)).toFixed(1);
   const npsScore = dashboard?.npsScore ?? 56;
@@ -196,29 +215,37 @@ export default function ReviewsPage() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Monthly average rating</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={monthlyRatings}>
-                <XAxis dataKey="month" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <YAxis domain={[3.5, 5]} stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                <Bar dataKey="rating" fill="#F59E0B" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {monthlyRatings.length === 0 ? (
+              <p className="text-xs text-gray-400 italic text-center py-12">Not enough star-rating data to plot a trend yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={monthlyRatings}>
+                  <XAxis dataKey="month" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[Math.max(0, Math.min(...monthlyRatings.map(m => m.rating)) - 0.5), 5]} stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} formatter={(v: any, _, p) => [`${v} (${p.payload.count} reviews)`, 'avg']} />
+                  <Bar dataKey="rating" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">NPS trend</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={npsHistory}>
-                <XAxis dataKey="month" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#9CA3AF" tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                <ReferenceLine y={50} stroke="#10B981" strokeDasharray="3 3" label={{ value: 'Excellent', fontSize: 9, fill: '#10B981' }} />
-                <ReferenceLine y={32} stroke="#9CA3AF" strokeDasharray="3 3" label={{ value: 'Industry avg', fontSize: 9, fill: '#9CA3AF' }} />
-                <Line type="monotone" dataKey="nps" stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {npsHistory.length === 0 ? (
+              <p className="text-xs text-gray-400 italic text-center py-12">No NPS responses yet — dispatch a campaign to start tracking.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={npsHistory}>
+                  <XAxis dataKey="month" stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                  <YAxis stroke="#9CA3AF" tick={{ fontSize: 11 }} />
+                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <ReferenceLine y={50} stroke="#10B981" strokeDasharray="3 3" label={{ value: 'Excellent', fontSize: 9, fill: '#10B981' }} />
+                  <ReferenceLine y={32} stroke="#9CA3AF" strokeDasharray="3 3" label={{ value: 'Industry avg', fontSize: 9, fill: '#9CA3AF' }} />
+                  <Line type="monotone" dataKey="nps" stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>

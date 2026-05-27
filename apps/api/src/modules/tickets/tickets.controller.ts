@@ -25,11 +25,12 @@ export class TicketsController {
     @Query('category') category?: TicketCategory,
     @Query('priority') priority?: TicketPriority,
     @Query('unitId') unitId?: string,
+    @Query('propertyId') propertyId?: string,
     @Query('search') search?: string,
     @Query('limit') limit?: string,
   ) {
     return this.ticketsService.findAll(req.workspaceId, {
-      status, category, priority, unitId, search,
+      status, category, priority, unitId, propertyId, search,
       limit: limit ? parseInt(limit) : undefined,
     });
   }

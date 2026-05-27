@@ -22,6 +22,7 @@ export class TicketsService {
     category?: TicketCategory;
     priority?: TicketPriority;
     unitId?: string;
+    propertyId?: string;
     assignedVendorId?: string;
     search?: string;
     limit?: number;
@@ -37,6 +38,7 @@ export class TicketsService {
         ...(filters?.category && { category: filters.category }),
         ...(filters?.priority && { priority: filters.priority }),
         ...(filters?.unitId && { unitId: filters.unitId }),
+        ...(filters?.propertyId && { unit: { propertyId: filters.propertyId } }),
         ...(filters?.assignedVendorId && { assignedVendorId: filters.assignedVendorId }),
         ...(filters?.search && {
           OR: [
@@ -46,9 +48,9 @@ export class TicketsService {
         }),
       },
       include: {
-        unit: { select: { unitNumber: true, property: { select: { name: true } } } },
-        tenant: { select: { fullName: true, phone: true } },
-        vendor: { select: { companyName: true, contactName: true, phone: true } },
+        unit: { select: { id: true, unitNumber: true, property: { select: { id: true, name: true } } } },
+        tenant: { select: { id: true, fullName: true, phone: true } },
+        vendor: { select: { id: true, companyName: true, contactName: true, phone: true } },
       },
       orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }],
       ...(filters?.limit && { take: filters.limit }),
@@ -150,7 +152,7 @@ export class TicketsService {
       OPEN: tickets.filter(t => t.status === TicketStatus.OPEN),
       ASSIGNED: tickets.filter(t => t.status === TicketStatus.ASSIGNED),
       IN_PROGRESS: tickets.filter(t => t.status === TicketStatus.IN_PROGRESS),
-      RESOLVED: tickets.filter(t => t.status === TicketStatus.COMPLETED),
+      COMPLETED: tickets.filter(t => t.status === TicketStatus.COMPLETED),
     };
   }
 

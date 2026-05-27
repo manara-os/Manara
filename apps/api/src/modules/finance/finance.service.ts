@@ -122,8 +122,8 @@ export class FinanceService {
       include: {
         lease: {
           include: {
-            tenant: { select: { id: true, fullName: true, phone: true, email: true } },
-            unit: { select: { unitNumber: true, property: { select: { name: true } } } },
+            tenant: { select: { id: true, fullName: true, phone: true, email: true, meta: true } },
+            unit: { select: { id: true, unitNumber: true, property: { select: { id: true, name: true } } } },
           },
         },
       },

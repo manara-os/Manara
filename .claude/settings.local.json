@@ -287,7 +287,8 @@
       "Bash(echo \"PID $!\")",
       "Bash(curl -s -o /dev/null -w \"API → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)",
       "Bash(curl -s http://localhost:3001/api/v1/owners)",
-      "Bash(ps -p 559 -o lstart=)"
+      "Bash(ps -p 559 -o lstart=)",
+      "Bash(grep -A 4 \"tenant: { select: { id: true, fullName\" \"/Users/amit/Desktop/Property Management flows/Manara OS Claude Code/apps/api/dist/modules/finance/finance.service.js\")"
     ]
   }
 }

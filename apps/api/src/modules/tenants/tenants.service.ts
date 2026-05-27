@@ -22,7 +22,16 @@ export class TenantsService {
       include: {
         leases: {
           where: { status: 'ACTIVE' },
-          include: { unit: { select: { unitNumber: true, property: { select: { name: true } } } } },
+          orderBy: { startDate: 'desc' },
+          select: {
+            id: true,
+            status: true,
+            startDate: true,
+            endDate: true,
+            annualRent: true,
+            paymentFrequency: true,
+            unit: { select: { id: true, unitNumber: true, property: { select: { id: true, name: true } } } },
+          },
           take: 1,
         },
       },

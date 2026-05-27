@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Building2, Users, Bell, CreditCard, Key, Shield } from 'lucide-react';
@@ -25,6 +25,18 @@ export default function SettingsPage() {
     city: ws?.city ?? '',
     trnNumber: ws?.trnNumber ?? '',
   });
+
+  // Re-sync form when workspace finishes loading (auth store hydrates async)
+  useEffect(() => {
+    if (!ws) return;
+    setForm({
+      name: ws.name ?? '',
+      contactEmail: ws.contactEmail ?? '',
+      contactPhone: ws.contactPhone ?? '',
+      city: ws.city ?? '',
+      trnNumber: ws.trnNumber ?? '',
+    });
+  }, [ws?.id, ws?.name, ws?.contactEmail, ws?.contactPhone, ws?.city, ws?.trnNumber]);
 
   const saveMutation = useMutation({
     mutationFn: (data: any) => workspacesApi.update(data),

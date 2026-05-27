@@ -232,9 +232,24 @@ export default function CompliancePage() {
                         size="sm"
                         variant="outline"
                         className="flex-shrink-0"
-                        onClick={() => toast.success(`Renewal triggered for ${item.name}`)}
+                        disabled={renewMutation.isPending}
+                        onClick={() => {
+                          // Default new expiry = today + 1 year (typical UAE renewal)
+                          const nextYear = new Date();
+                          nextYear.setFullYear(nextYear.getFullYear() + 1);
+                          const newExpiryDate = window.prompt(
+                            `Enter new expiry date for ${item.name} (YYYY-MM-DD):`,
+                            nextYear.toISOString().slice(0, 10),
+                          );
+                          if (!newExpiryDate) return;
+                          if (!/^\d{4}-\d{2}-\d{2}$/.test(newExpiryDate)) {
+                            toast.error('Please use YYYY-MM-DD format');
+                            return;
+                          }
+                          renewMutation.mutate({ id: item.id, newExpiryDate });
+                        }}
                       >
-                        Renew
+                        {renewMutation.isPending && renewMutation.variables?.id === item.id ? 'Renewing…' : 'Renew'}
                       </Button>
                     </div>
                   );

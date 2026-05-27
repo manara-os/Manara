@@ -131,22 +131,33 @@ export default function ListingsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters — counts come from the workspace-wide summary, not the filtered query */}
       <div className="flex gap-1 border-b border-gray-200 flex-wrap">
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-2 text-sm font-medium transition-colors ${
-              filter === f ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {f === 'ALL' ? 'All' : STATUS_BRAND[f as ListingStatus]?.label ?? f}
-            <span className="ml-1.5 text-[10px] text-gray-400">
-              ({f === 'ALL' ? items.length : items.filter((i) => i.status === f).length})
-            </span>
-          </button>
-        ))}
+        {FILTERS.map((f) => {
+          // Use summary KPIs for accurate counts (independent of active filter)
+          const count = (() => {
+            if (f === 'ALL')      return summary.total ?? 0;
+            if (f === 'ACTIVE')   return summary.active ?? 0;
+            if (f === 'PAUSED')   return summary.paused ?? 0;
+            if (f === 'EXPIRED')  return summary.expired ?? 0;
+            if (f === 'DRAFT')    return summary.draft ?? 0;
+            if (f === 'RENTED')   return summary.rented ?? 0;
+            if (f === 'SOLD')     return summary.sold ?? 0;
+            return items.filter((i) => i.status === f).length;
+          })();
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${
+                filter === f ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {f === 'ALL' ? 'All' : STATUS_BRAND[f as ListingStatus]?.label ?? f}
+              <span className="ml-1.5 text-[10px] text-gray-400">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Listings grid */}

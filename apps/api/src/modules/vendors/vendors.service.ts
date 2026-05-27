@@ -35,18 +35,42 @@ export class VendorsService {
     const vendor = await this.prisma.vendor.findFirst({
       where: { id, workspaceId },
       include: {
-        user: { select: { id: true, phone: true, email: true } },
         tickets: {
           orderBy: { createdAt: 'desc' },
           take: 20,
           include: {
-            unit: { select: { unitNumber: true, property: { select: { name: true } } } },
+            unit: { select: { id: true, unitNumber: true, property: { select: { id: true, name: true } } } },
           },
         },
       },
     });
     if (!vendor) throw new NotFoundException('Vendor not found');
-    return vendor;
+
+    // Compute ticket counts properly
+    const [totalTickets, activeTickets, completedTickets, ratings] = await Promise.all([
+      this.prisma.ticket.count({ where: { workspaceId, assignedVendorId: id } }),
+      this.prisma.ticket.count({
+        where: { workspaceId, assignedVendorId: id, status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] as any } },
+      }),
+      this.prisma.ticket.count({
+        where: { workspaceId, assignedVendorId: id, status: { in: ['COMPLETED', 'CLOSED'] as any } },
+      }),
+      this.prisma.ticket.findMany({
+        where: { workspaceId, assignedVendorId: id, tenantRating: { not: null } },
+        select: { tenantRating: true },
+      }),
+    ]);
+
+    const avgRating = ratings.length
+      ? Number((ratings.reduce((s, r) => s + (r.tenantRating ?? 0), 0) / ratings.length).toFixed(2))
+      : null;
+
+    const fallbackRating = Number(vendor.rating ?? 0);
+    return {
+      ...vendor,
+      _count: { tickets: totalTickets, activeTickets, completedTickets },
+      avgRating: avgRating ?? (fallbackRating > 0 ? fallbackRating : null),
+    };
   }
 
   async create(workspaceId: string, dto: {

@@ -264,17 +264,33 @@ export function ReceiptVault({ ownerName, ownerId }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-red-600 font-bold mb-1.5">Before</p>
-                  <div className="aspect-video bg-gradient-to-br from-red-50 to-orange-50 rounded-lg border-2 border-dashed border-red-200 flex flex-col items-center justify-center text-red-400">
-                    <ImageIcon className="w-8 h-8 mb-1" />
-                    <p className="text-[10px]">{selected.beforePhoto}</p>
-                  </div>
+                  {selected.beforePhoto && /^https?:\/\//.test(selected.beforePhoto) ? (
+                    <img
+                      src={selected.beforePhoto}
+                      alt="Before"
+                      className="aspect-video w-full object-cover rounded-lg border-2 border-red-200"
+                    />
+                  ) : (
+                    <div className="aspect-video bg-gradient-to-br from-red-50 to-orange-50 rounded-lg border-2 border-dashed border-red-200 flex flex-col items-center justify-center text-red-400">
+                      <ImageIcon className="w-8 h-8 mb-1" />
+                      <p className="text-[10px]">{selected.beforePhoto ?? 'No photo'}</p>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-emerald-600 font-bold mb-1.5">After</p>
-                  <div className="aspect-video bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center text-emerald-400">
-                    <ImageIcon className="w-8 h-8 mb-1" />
-                    <p className="text-[10px]">{selected.afterPhoto}</p>
-                  </div>
+                  {selected.afterPhoto && /^https?:\/\//.test(selected.afterPhoto) ? (
+                    <img
+                      src={selected.afterPhoto}
+                      alt="After"
+                      className="aspect-video w-full object-cover rounded-lg border-2 border-emerald-200"
+                    />
+                  ) : (
+                    <div className="aspect-video bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center text-emerald-400">
+                      <ImageIcon className="w-8 h-8 mb-1" />
+                      <p className="text-[10px]">{selected.afterPhoto ?? 'No photo'}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
