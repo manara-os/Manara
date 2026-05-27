@@ -32,6 +32,7 @@ import { AecbModule } from './modules/aecb/aecb.module';
 import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { RoiModule } from './modules/roi/roi.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { TeamModule } from './modules/team/team.module';
 import { DatabaseModule } from './database/database.module';
 import { CryptoModule } from './common/crypto/crypto.module';
 import { QueuesModule } from './queues/queues.module';
@@ -123,6 +124,7 @@ import { validationSchema } from './config/validation';
     WhatsAppModule,
     RoiModule,
     PrivacyModule,
+    TeamModule,
     QueuesModule,
   ],
 })

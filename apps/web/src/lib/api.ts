@@ -340,3 +340,8 @@ export const roiApi = {
   scenarios: () => api.get('/roi/scenarios'),
   simulate: (data: any) => api.post('/roi/simulate', data),
 };
+
+export const teamApi = {
+  list: () => api.get('/team'),
+  matrix: () => api.get('/team/escalation-matrix'),
+};
