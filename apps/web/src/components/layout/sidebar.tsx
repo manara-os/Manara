@@ -29,6 +29,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserRole } from '@/types';
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 interface NavItem {
   label: string;
@@ -91,6 +92,29 @@ export function Sidebar() {
   const { user, currentWorkspace, logout } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
   const userRole = currentWorkspace?.role as UserRole;
+  const { t } = useT();
+
+  const translate = (label: string): string => {
+    const map: Record<string, string> = {
+      Dashboard: t('nav.dashboard'),
+      Properties: t('nav.properties'),
+      Listings: t('nav.listings'),
+      Tenants: t('nav.tenants'),
+      Leases: t('nav.leases'),
+      Maintenance: t('nav.maintenance'),
+      Owners: t('nav.owners'),
+      Vendors: t('nav.vendors'),
+      Finance: t('nav.finance'),
+      Overdue: t('nav.overdue'),
+      'Reviews & NPS': t('nav.reviews'),
+      Reports: t('nav.reports'),
+      Team: t('nav.team'),
+      Compliance: t('nav.compliance'),
+      'Feature Requests': t('nav.feature_requests'),
+      Settings: t('nav.settings'),
+    };
+    return map[label] ?? label;
+  };
 
   const filteredGroups = navGroups
     .map((g) => ({
@@ -162,7 +186,7 @@ export function Sidebar() {
                         isActive ? 'text-amber-400' : '')}
                     />
                     {!collapsed && (
-                      <span className="text-[13px] font-medium truncate">{item.label}</span>
+                      <span className="text-[13px] font-medium truncate">{translate(item.label)}</span>
                     )}
                     {!collapsed && item.badge && item.badge > 0 && (
                       <span className="ml-auto text-[10px] bg-amber-500 text-white rounded-full px-1.5 py-0.5 font-medium leading-none">

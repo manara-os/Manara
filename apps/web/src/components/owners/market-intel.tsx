@@ -143,7 +143,7 @@ export function MarketIntel({ portfolio }: Props) {
             <div key={i} className="border border-gray-200 rounded-lg p-3">
               <p className="text-sm font-semibold text-gray-900">{r.propertyName} · {r.unitNumber}</p>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                {r.comps.map((c, j) => (
+                {r.comps.map((c: any, j: number) => (
                   <div key={j} className="bg-gray-50 rounded p-2 flex items-center justify-between gap-2">
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase">{c.portal}</p>

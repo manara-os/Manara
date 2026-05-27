@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Receipt, FileText, Image as ImageIcon, Download, Eye, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { receiptsApi } from '@/lib/api';
 
 interface VaultEntry {
   id: string;
@@ -25,6 +27,7 @@ interface VaultEntry {
 
 interface Props {
   ownerName: string;
+  ownerId?: string;
 }
 
 const seedEntries = (): VaultEntry[] => {
@@ -123,18 +126,52 @@ const STATUS_VARIANTS: Record<string, 'success' | 'warning' | 'secondary'> = {
   APPROVED: 'secondary',
 };
 
-export function ReceiptVault({ ownerName }: Props) {
-  const [entries] = useState<VaultEntry[]>(seedEntries());
+export function ReceiptVault({ ownerName, ownerId }: Props) {
+  const qc = useQueryClient();
   const [selected, setSelected] = useState<VaultEntry | null>(null);
 
-  const total = entries.reduce((s, e) => s + e.amount + e.vatAmount, 0);
-  const ytdInvoices = entries.length;
-  const ytdSavings = 1240; // mock: claimed back via warranty / vendor credits
+  const { data: apiPayload } = useQuery({
+    queryKey: ['receipts', ownerId],
+    queryFn: () => receiptsApi.list(ownerId!) as Promise<{ receipts: any[]; kpis: any }>,
+    enabled: !!ownerId,
+  });
 
-  const approveCharge = (id: string) => {
-    toast.success('Charge approved — will deduct from next payout');
-    setSelected(null);
-  };
+  const apiReceipts = apiPayload?.receipts ?? [];
+
+  // Use API data if available, else fall back to seed for first-render demo
+  const entries: VaultEntry[] = apiReceipts.length
+    ? apiReceipts.map((r: any) => ({
+        id: r.id,
+        date: new Date(r.receiptDate),
+        unit: r.unit?.unitNumber ?? '—',
+        category: (r.category ?? 'GENERAL') as VaultEntry['category'],
+        description: r.description,
+        vendor: r.vendor?.companyName ?? '—',
+        amount: Number(r.amount),
+        vatAmount: Number(r.vatAmount),
+        invoiceNo: r.vendorInvoiceNo ?? '',
+        beforePhoto: r.beforePhotoUrl ?? undefined,
+        afterPhoto: r.afterPhotoUrl ?? undefined,
+        approvedBy: r.meta?.approvedByName ?? 'PM',
+        status: (r.status === 'PENDING_APPROVAL' ? 'PENDING_OWNER' : r.status) as VaultEntry['status'],
+      }))
+    : seedEntries();
+
+  const total = apiPayload?.kpis?.total ?? entries.reduce((s, e) => s + e.amount + e.vatAmount, 0);
+  const ytdInvoices = apiPayload?.kpis?.count ?? entries.length;
+  const ytdSavings = apiPayload?.kpis?.savings ?? 1240;
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => receiptsApi.approve(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['receipts', ownerId] });
+      toast.success('Charge approved — will deduct from next payout');
+      setSelected(null);
+    },
+    onError: () => toast.error('Failed to approve'),
+  });
+
+  const approveCharge = (id: string) => approveMutation.mutate(id);
 
   return (
     <Card className="border-blue-200/60">

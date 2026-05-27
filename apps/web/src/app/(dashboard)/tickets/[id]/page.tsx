@@ -157,6 +157,7 @@ export default function TicketDetailPage() {
           {/* Bid Marketplace — vendors auto-bid on open tickets */}
           {(ticket.status === 'OPEN' || ticket.status === 'ASSIGNED') && (
             <BidMarketplace
+              ticketId={ticket.id}
               ticketRef={ticket.ticketRef}
               ticketTitle={ticket.title}
               category={ticket.category}

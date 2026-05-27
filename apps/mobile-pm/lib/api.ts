@@ -81,4 +81,33 @@ export const pmApi = {
 
   // Me
   getProfile: () => unwrap<any>(apiClient.get('/users/me')),
+
+  // ── Production-push endpoints ─────────────────────────────────────
+  // Compliance
+  getCompliance: () => unwrap<any[]>(apiClient.get('/compliance')),
+  getComplianceKpis: () => unwrap<any>(apiClient.get('/compliance/kpis')),
+  renewCompliance: (id: string, newExpiryDate: string) =>
+    apiClient.post(`/compliance/${id}/renew`, { newExpiryDate }),
+
+  // Reviews + NPS
+  getReviews: (params?: any) => unwrap<any[]>(apiClient.get('/reviews', { params })),
+  getReviewsDashboard: () => unwrap<any>(apiClient.get('/reviews/dashboard')),
+  respondReview: (id: string, response: string) => apiClient.post(`/reviews/${id}/respond`, { response }),
+  dispatchNps: (campaignName?: string) => apiClient.post('/nps/dispatch', { campaignName }),
+
+  // Vendor scores
+  getVendorLeaderboard: (period?: '30D' | '90D' | 'YTD') =>
+    unwrap<any[]>(apiClient.get('/vendor-scores/leaderboard', { params: period ? { period } : {} })),
+
+  // Bids
+  getBidsForTicket: (ticketId: string) => unwrap<any>(apiClient.get(`/bids/ticket/${ticketId}`)),
+  acceptBid: (bidId: string) => apiClient.post(`/bids/${bidId}/accept`),
+
+  // Receipts (approve on behalf of owner)
+  getReceipts: (ownerId: string) => unwrap<any>(apiClient.get('/receipts', { params: { ownerId } })),
+
+  // WhatsApp
+  getWhatsAppThread: (recipientType: 'tenant' | 'owner' | 'vendor', recipientId: string) =>
+    unwrap<any[]>(apiClient.get('/whatsapp/thread', { params: { recipientType, recipientId } })),
+  sendWhatsApp: (data: any) => apiClient.post('/whatsapp/send', data),
 };

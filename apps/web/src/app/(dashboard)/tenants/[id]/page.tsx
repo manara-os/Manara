@@ -216,10 +216,10 @@ export default function TenantDetailPage() {
       )}
 
       {/* AECB Credit Reporting opt-in — build credit with on-time rent */}
-      <AecbCreditReporting tenantName={tenant.fullName} />
+      <AecbCreditReporting tenantName={tenant.fullName} tenantId={id} />
 
       {/* WhatsApp 2-way thread with AI agent in the loop */}
-      <WhatsAppThread recipientType="tenant" recipientName={tenant.fullName} recipientPhone={tenant.phone} />
+      <WhatsAppThread recipientType="tenant" recipientId={id} recipientName={tenant.fullName} recipientPhone={tenant.phone} />
 
       {/* All leases history — if more than one */}
       {tenant.leases && tenant.leases.length > 1 && (

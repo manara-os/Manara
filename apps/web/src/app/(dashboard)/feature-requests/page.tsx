@@ -123,10 +123,10 @@ export default function FeatureRequestsPage() {
 
   const upvote = (id: string) => {
     if (voted.has(id)) {
-      setVoted(new Set([...voted].filter((v) => v !== id)));
+      setVoted(new Set(Array.from(voted).filter((v) => v !== id)));
       setRequests(requests.map((r) => (r.id === id ? { ...r, votes: r.votes - 1 } : r)));
     } else {
-      setVoted(new Set([...voted, id]));
+      setVoted(new Set([...Array.from(voted), id]));
       setRequests(requests.map((r) => (r.id === id ? { ...r, votes: r.votes + 1 } : r)));
     }
   };

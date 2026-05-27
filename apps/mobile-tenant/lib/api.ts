@@ -47,3 +47,23 @@ export const tenantApi = {
   registerPushToken: (token: string, provider: string) =>
     apiClient.post('/push-tokens', { token, provider, appVariant: 'tenant' }),
 };
+
+// ── Production-push endpoints (tenant) ─────────────────────────────
+export const aecbApi = {
+  history: (tenantId: string) => apiClient.get(`/aecb/tenants/${tenantId}`),
+  optIn: (tenantId: string, optIn: boolean) => apiClient.post(`/aecb/tenants/${tenantId}/opt-in`, { optIn }),
+};
+
+export const whatsappApi = {
+  thread: (recipientType: 'tenant' | 'owner' | 'vendor', recipientId: string) =>
+    apiClient.get('/whatsapp/thread', { params: { recipientType, recipientId } }),
+  send: (data: any) => apiClient.post('/whatsapp/send', data),
+};
+
+export const reviewsApi = {
+  submit: (data: any) => apiClient.post('/reviews', data),
+};
+
+export const npsApi = {
+  respond: (id: string, score: number, comment?: string) => apiClient.post(`/nps/${id}/respond`, { score, comment }),
+};

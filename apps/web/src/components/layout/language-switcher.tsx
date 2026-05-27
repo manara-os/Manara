@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useT } from '@/lib/i18n/i18n-provider';
 
 interface Language {
   code: string;
@@ -20,37 +21,14 @@ const LANGUAGES: Language[] = [
   { code: 'tl', name: 'Tagalog',  nativeName: 'Filipino',   flag: '🇵🇭' },
 ];
 
-const STORAGE_KEY = 'manara-lang';
-
 export function LanguageSwitcher() {
+  const { locale, setLocale } = useT();
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState<Language>(LANGUAGES[0]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const lang = LANGUAGES.find((l) => l.code === saved);
-      if (lang) {
-        setCurrent(lang);
-        applyDirection(lang);
-      }
-    }
-  }, []);
-
-  const applyDirection = (lang: Language) => {
-    if (typeof document === 'undefined') return;
-    document.documentElement.lang = lang.code;
-    document.documentElement.dir = lang.rtl ? 'rtl' : 'ltr';
-  };
+  const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];
 
   const select = (lang: Language) => {
-    setCurrent(lang);
+    setLocale(lang.code);
     setOpen(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, lang.code);
-    }
-    applyDirection(lang);
     toast.success(
       lang.code === 'ar' ? `تم تغيير اللغة إلى ${lang.nativeName}` :
       lang.code === 'hi' ? `भाषा बदलकर ${lang.nativeName} कर दी गई` :

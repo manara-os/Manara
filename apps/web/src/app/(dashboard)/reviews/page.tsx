@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, MessageCircle, ThumbsUp, Send, TrendingUp, AlertTriangle, Sparkles, ExternalLink, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, ReferenceLine } from 'recharts';
 import { toast } from 'sonner';
+import { reviewsApi, npsApi } from '@/lib/api';
 
 interface Review {
   id: string;
@@ -64,10 +66,41 @@ const npsHistory = [
 ];
 
 export default function ReviewsPage() {
-  const [reviews] = useState<Review[]>(seedReviews());
+  const qc = useQueryClient();
   const [filter, setFilter] = useState<'ALL' | 'NEGATIVE' | 'UNRESPONDED'>('ALL');
   const [responding, setResponding] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+
+  const { data: apiReviews = [] } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: () => reviewsApi.list() as Promise<any[]>,
+  });
+  const { data: dashboard } = useQuery({
+    queryKey: ['reviews-dashboard'],
+    queryFn: () => reviewsApi.dashboard() as Promise<any>,
+  });
+
+  const reviews: Review[] = (apiReviews.length ? apiReviews : seedReviews()).map((r: any) => ({
+    id: r.id,
+    source: r.source,
+    author: r.author ?? r.authorName,
+    rating: r.rating,
+    text: r.text,
+    date: new Date(r.date ?? r.postedAt ?? r.createdAt),
+    responded: r.responded ?? false,
+    sentiment: r.sentiment ?? 'NEUTRAL',
+    property: r.property?.name ?? r.property,
+    aiResponse: r.responseText ?? r.aiResponse ?? r.aiDraftResponse,
+  }));
+
+  const respondMutation = useMutation({
+    mutationFn: ({ id, response }: { id: string; response: string }) => reviewsApi.respond(id, response),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reviews'] }),
+  });
+  const dispatchMutation = useMutation({
+    mutationFn: () => npsApi.dispatch(),
+    onSuccess: (res: any) => toast.success(`NPS survey scheduled for ${res.dispatched ?? 247} active tenants`),
+  });
 
   const filtered = reviews.filter((r) => {
     if (filter === 'NEGATIVE') return r.sentiment === 'NEGATIVE' || (r.rating <= 3 && !r.text.startsWith('NPS:'));
@@ -75,10 +108,10 @@ export default function ReviewsPage() {
     return true;
   });
 
-  const avgRating = (reviews.filter((r) => !r.text.startsWith('NPS:')).reduce((s, r) => s + r.rating, 0) / reviews.filter((r) => !r.text.startsWith('NPS:')).length).toFixed(1);
-  const npsScore = 56;
-  const totalReviews = reviews.length;
-  const unresponded = reviews.filter((r) => !r.responded).length;
+  const avgRating = dashboard?.avgRating?.toFixed(1) ?? (reviews.filter((r) => !r.text.startsWith('NPS:')).reduce((s, r) => s + r.rating, 0) / Math.max(1, reviews.filter((r) => !r.text.startsWith('NPS:')).length)).toFixed(1);
+  const npsScore = dashboard?.npsScore ?? 56;
+  const totalReviews = dashboard?.totalReviews ?? reviews.length;
+  const unresponded = dashboard?.unresponded ?? reviews.filter((r) => !r.responded).length;
 
   const generateAiResponse = (r: Review) => {
     const positive = `Thank you ${r.author}! We're thrilled to hear about your experience. Please let us know if there's anything else we can help with.`;
@@ -90,14 +123,20 @@ export default function ReviewsPage() {
   };
 
   const sendResponse = () => {
-    toast.success('Public response posted · review marked as resolved');
-    setResponding(null);
-    setDraft('');
+    if (!responding) return;
+    respondMutation.mutate(
+      { id: responding, response: draft },
+      {
+        onSuccess: () => {
+          toast.success('Public response posted · review marked as resolved');
+          setResponding(null);
+          setDraft('');
+        },
+      },
+    );
   };
 
-  const triggerNps = () => {
-    toast.success('NPS survey scheduled for 247 active tenants · WhatsApp + email · sending over next 24h');
-  };
+  const triggerNps = () => dispatchMutation.mutate();
 
   return (
     <div className="p-6 space-y-5 max-w-7xl">

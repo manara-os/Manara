@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreditCard, TrendingUp, ShieldCheck, Info, CheckCircle2, Calendar, Sparkles, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { toast } from 'sonner';
+import { aecbApi } from '@/lib/api';
 
 interface Props {
   tenantName: string;
+  tenantId?: string;
 }
 
 const monthlyHistory = [
@@ -21,19 +24,39 @@ const monthlyHistory = [
   { month: 'May', score: 752, paidOnTime: true },
 ];
 
-export function AecbCreditReporting({ tenantName }: Props) {
-  const [optedIn, setOptedIn] = useState(true);
+export function AecbCreditReporting({ tenantName, tenantId }: Props) {
+  const qc = useQueryClient();
   const [agreed, setAgreed] = useState(true);
 
-  const toggleOptIn = (val: boolean) => {
-    setOptedIn(val);
-    if (val) toast.success('Opted in · Manara will report your on-time rent payments to AECB monthly');
-    else toast.info('Opted out · no future rent payments will be shared with AECB');
-  };
+  const { data: api } = useQuery({
+    queryKey: ['aecb', tenantId],
+    queryFn: () => aecbApi.history(tenantId!) as Promise<any>,
+    enabled: !!tenantId,
+  });
 
-  const currentScore = monthlyHistory[monthlyHistory.length - 1].score;
+  const [localOptIn, setLocalOptIn] = useState(true);
+  const optedIn = api?.optedIn ?? localOptIn;
+  const currentScore = api?.currentScore ?? monthlyHistory[monthlyHistory.length - 1].score;
   const startScore = monthlyHistory[0].score;
   const delta = currentScore - startScore;
+
+  const optInMutation = useMutation({
+    mutationFn: (val: boolean) => aecbApi.optIn(tenantId!, val),
+    onSuccess: (_, val) => {
+      qc.invalidateQueries({ queryKey: ['aecb', tenantId] });
+      if (val) toast.success('Opted in · Manara will report your on-time rent payments to AECB monthly');
+      else toast.info('Opted out · no future rent payments will be shared with AECB');
+    },
+  });
+
+  const toggleOptIn = (val: boolean) => {
+    if (tenantId) optInMutation.mutate(val);
+    else {
+      setLocalOptIn(val);
+      if (val) toast.success('Opted in · Manara will report your on-time rent payments to AECB monthly');
+      else toast.info('Opted out · no future rent payments will be shared with AECB');
+    }
+  };
 
   return (
     <Card className="border-indigo-200/60">

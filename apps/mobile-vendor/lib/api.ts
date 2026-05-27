@@ -42,3 +42,16 @@ export const vendorApi = {
   getProfile: () => apiClient.get('/vendors/me'),
   getNotifications: () => apiClient.get('/notifications'),
 };
+
+// ── Production-push endpoints (vendor) ─────────────────────────────
+export const bidsApi = {
+  forTicket: (ticketId: string) => apiClient.get(`/bids/ticket/${ticketId}`),
+  submit: (ticketId: string, data: any) => apiClient.post(`/bids/ticket/${ticketId}`, data),
+  withdraw: (bidId: string) => apiClient.post(`/bids/${bidId}/withdraw`),
+};
+
+export const whatsappApi = {
+  thread: (recipientType: 'tenant' | 'owner' | 'vendor', recipientId: string) =>
+    apiClient.get('/whatsapp/thread', { params: { recipientType, recipientId } }),
+  send: (data: any) => apiClient.post('/whatsapp/send', data),
+};

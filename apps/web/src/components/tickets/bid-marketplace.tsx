@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Gavel, Clock, CheckCircle2, Star, Sparkles, TrendingDown, Send, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { bidsApi } from '@/lib/api';
 
 interface Bid {
   id: string;
@@ -24,6 +26,7 @@ interface Bid {
 }
 
 interface Props {
+  ticketId?: string;
   ticketRef: string;
   ticketTitle: string;
   category?: string;
@@ -67,19 +70,59 @@ const seedBids = (category?: string): Bid[] => {
   ];
 };
 
-export function BidMarketplace({ ticketRef, ticketTitle, category, status, onAccept }: Props) {
-  const [bids, setBids] = useState<Bid[]>(seedBids(category));
+export function BidMarketplace({ ticketId, ticketRef, ticketTitle, category, status, onAccept }: Props) {
+  const qc = useQueryClient();
   const [marketplaceOpen, setMarketplaceOpen] = useState(status === 'OPEN');
   const [accepted, setAccepted] = useState<string | null>(null);
 
-  const lowest = bids.reduce((m, b) => Math.min(m, b.amount), Infinity);
-  const avg = bids.reduce((s, b) => s + b.amount, 0) / bids.length;
+  const { data: payload } = useQuery({
+    queryKey: ['ticket-bids', ticketId],
+    queryFn: () => bidsApi.forTicket(ticketId!) as Promise<{ bids: any[]; kpis: any }>,
+    enabled: !!ticketId,
+  });
+
+  const bids: Bid[] = (payload?.bids?.length ? payload.bids : seedBids(category)).map((b: any) => ({
+    id: b.id,
+    vendorId: b.vendorId ?? b.vendor?.id,
+    vendorName: b.vendorName ?? b.vendor?.companyName,
+    vendorRating: Number(b.vendorRating ?? b.vendor?.rating ?? 0),
+    vendorJobsDone: b.vendorJobsDone ?? b.vendor?.totalJobsCompleted ?? 0,
+    amount: Number(b.amount ?? b.amountAed ?? 0),
+    vatIncluded: b.vatIncluded ?? true,
+    etaHours: b.etaHours,
+    warrantyDays: b.warrantyDays ?? 30,
+    message: b.message ?? '',
+    submittedAt: new Date(b.submittedAt ?? Date.now()),
+    aiRecommended: b.aiRecommended,
+    aiReason: b.aiReason,
+  }));
+
+  const acceptMutation = useMutation({
+    mutationFn: (bidId: string) => bidsApi.accept(bidId),
+    onSuccess: (_, bidId) => {
+      qc.invalidateQueries({ queryKey: ['ticket-bids', ticketId] });
+      qc.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      setAccepted(bidId);
+      const b = bids.find((x) => x.id === bidId);
+      if (b) {
+        toast.success(`${b.vendorName} accepted · ETA ${b.etaHours}h · WhatsApp confirmation sent`);
+        onAccept?.(b);
+      }
+    },
+    onError: () => toast.error('Failed to accept bid'),
+  });
+
+  const lowest = bids.length ? Math.min(...bids.map((b) => b.amount)) : 0;
+  const avg = bids.length ? bids.reduce((s, b) => s + b.amount, 0) / bids.length : 0;
   const savings = Math.round(avg - lowest);
 
   const acceptBid = (b: Bid) => {
-    setAccepted(b.id);
-    toast.success(`${b.vendorName} accepted · ETA ${b.etaHours}h · WhatsApp confirmation sent`);
-    onAccept?.(b);
+    if (ticketId) acceptMutation.mutate(b.id);
+    else {
+      setAccepted(b.id);
+      toast.success(`${b.vendorName} accepted · ETA ${b.etaHours}h · WhatsApp confirmation sent`);
+      onAccept?.(b);
+    }
   };
 
   const closeMarketplace = () => {

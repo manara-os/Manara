@@ -51,3 +51,28 @@ export const ownerApi = {
 
 // Keep legacy export for compatibility
 export const ownersApi = ownerApi;
+
+// ── Production-push endpoints ──────────────────────────────────────
+export const receiptsApi = {
+  list: (ownerId: string) => apiClient.get('/receipts', { params: { ownerId } }),
+  get: (id: string) => apiClient.get(`/receipts/${id}`),
+  approve: (id: string) => apiClient.post(`/receipts/${id}/approve`),
+  reject: (id: string, reason: string) => apiClient.post(`/receipts/${id}/reject`, { reason }),
+};
+
+export const taxCertsApi = {
+  list: (ownerId: string) => apiClient.get('/tax-certificates', { params: { ownerId } }),
+  generate: (ownerId: string, taxYear: number) => apiClient.post('/tax-certificates/generate', { ownerId, taxYear }),
+  email: (id: string, email: string) => apiClient.post(`/tax-certificates/${id}/email`, { email }),
+};
+
+export const roiApi = {
+  scenarios: () => apiClient.get('/roi/scenarios'),
+  simulate: (data: any) => apiClient.post('/roi/simulate', data),
+};
+
+export const whatsappApi = {
+  thread: (recipientType: 'tenant' | 'owner' | 'vendor', recipientId: string) =>
+    apiClient.get('/whatsapp/thread', { params: { recipientType, recipientId } }),
+  send: (data: any) => apiClient.post('/whatsapp/send', data),
+};

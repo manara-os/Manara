@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Shield, AlertOctagon, CheckCircle2, Calendar, Bell, Plus, X, FileText, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { complianceApi } from '@/lib/api';
 
 interface ComplianceItem {
   id: string;
@@ -58,8 +60,35 @@ function deriveStatus(d: Date): ComplianceItem['status'] {
 }
 
 export default function CompliancePage() {
-  const [items, setItems] = useState<ComplianceItem[]>(MOCK_ITEMS.map((i) => ({ ...i, status: deriveStatus(i.expiryDate) })));
+  const qc = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
+
+  const { data: apiItems = [] } = useQuery({
+    queryKey: ['compliance'],
+    queryFn: () => complianceApi.list() as Promise<any[]>,
+  });
+
+  // Map API → UI shape (keeps original ComplianceItem interface compatible)
+  const items: ComplianceItem[] = (apiItems.length ? apiItems : MOCK_ITEMS).map((i: any) => ({
+    id: i.id,
+    category: i.category,
+    name: i.name,
+    reference: i.referenceNumber ?? i.reference,
+    expiryDate: new Date(i.expiryDate),
+    status: i.status ?? deriveStatus(new Date(i.expiryDate)),
+    remindersSent: i.remindersSentCount ?? i.remindersSent ?? 0,
+    cost: Number(i.costAed ?? i.cost ?? 0) || undefined,
+    responsibleStaff: i.responsibleStaff ?? (i.meta?.responsibleStaff as string | undefined),
+  }));
+
+  const renewMutation = useMutation({
+    mutationFn: ({ id, newExpiryDate }: { id: string; newExpiryDate: string }) => complianceApi.renew(id, newExpiryDate),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['compliance'] });
+      toast.success('Renewed — reminder schedule reset');
+    },
+    onError: () => toast.error('Failed to renew'),
+  });
 
   const expired = items.filter((i) => i.status === 'EXPIRED');
   const expiringSoon = items.filter((i) => i.status === 'EXPIRING_SOON');

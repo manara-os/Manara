@@ -187,7 +187,7 @@ export default function VendorDetailPage() {
       <VendorWallet vendor={vendor} />
 
       {/* WhatsApp 2-way thread */}
-      <WhatsAppThread recipientType="vendor" recipientName={vendor.companyName} recipientPhone={vendor.phone} />
+      <WhatsAppThread recipientType="vendor" recipientId={vendor.id} recipientName={vendor.companyName} recipientPhone={vendor.phone} />
 
       {vendor.tickets?.length > 0 && (
         <Card>

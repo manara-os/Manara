@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Send, CheckCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { whatsappApi } from '@/lib/api';
 
 interface Msg {
   id: string;
@@ -18,6 +20,7 @@ interface Msg {
 
 interface Props {
   recipientType: 'tenant' | 'owner' | 'vendor';
+  recipientId?: string;
   recipientName: string;
   recipientPhone?: string;
 }
@@ -50,15 +53,48 @@ function seedMessages(type: string, name: string): Msg[] {
   ];
 }
 
-export function WhatsAppThread({ recipientType, recipientName, recipientPhone }: Props) {
+export function WhatsAppThread({ recipientType, recipientId, recipientName, recipientPhone }: Props) {
+  const qc = useQueryClient();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { data: apiMessages } = useQuery({
+    queryKey: ['whatsapp-thread', recipientType, recipientId],
+    queryFn: () => whatsappApi.thread(recipientType, recipientId!) as Promise<any[]>,
+    enabled: !!recipientId,
+    refetchInterval: 15_000, // poll for new inbound messages every 15s
+  });
+
   useEffect(() => {
-    setMessages(seedMessages(recipientType, recipientName));
-  }, [recipientType, recipientName]);
+    if (apiMessages && apiMessages.length > 0) {
+      setMessages(
+        apiMessages.map((m: any) => ({
+          id: m.id,
+          from: m.sender,
+          body: m.body,
+          ts: new Date(m.sentAt ?? m.createdAt),
+          delivered: m.deliveryStatus !== 'QUEUED' && m.deliveryStatus !== 'FAILED',
+          read: m.deliveryStatus === 'READ',
+        })),
+      );
+    } else if (!recipientId) {
+      // No API → fall back to demo seed
+      setMessages(seedMessages(recipientType, recipientName));
+    }
+  }, [apiMessages, recipientType, recipientName, recipientId]);
+
+  const sendMutation = useMutation({
+    mutationFn: (body: string) =>
+      whatsappApi.send({
+        recipientType,
+        recipientId,
+        recipientPhone,
+        body,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['whatsapp-thread', recipientType, recipientId] }),
+  });
 
   useEffect(() => {
     if (scrollRef.current && !collapsed) {
@@ -68,16 +104,25 @@ export function WhatsAppThread({ recipientType, recipientName, recipientPhone }:
 
   const send = () => {
     if (!draft.trim()) return;
+    const body = draft.trim();
+    setDraft('');
+    if (recipientId && recipientPhone) {
+      sendMutation.mutate(body, {
+        onSuccess: () => toast.success(`WhatsApp sent to ${recipientName}`),
+        onError: () => toast.error('Failed to send WhatsApp'),
+      });
+      return;
+    }
+    // No API context → local-only mode
     const newMsg: Msg = {
       id: `m${Date.now()}`,
       from: 'PM',
-      body: draft.trim(),
+      body,
       ts: new Date(),
       delivered: true,
       read: false,
     };
     setMessages([...messages, newMsg]);
-    setDraft('');
     toast.success(`WhatsApp sent to ${recipientName}`);
 
     // Simulate an AI auto-reply suggestion after a moment

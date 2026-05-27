@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trophy, Medal, Star, Zap, TrendingUp, TrendingDown, Award, Crown } from 'lucide-react';
 import Link from 'next/link';
+import { vendorScoresApi } from '@/lib/api';
 
 interface LeaderboardEntry {
   rank: number;
@@ -56,8 +58,28 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function VendorLeaderboard() {
-  const [data] = useState<LeaderboardEntry[]>(seedLeaderboard());
   const [period, setPeriod] = useState<'30D' | '90D' | 'YTD'>('90D');
+
+  const { data: apiData = [] } = useQuery({
+    queryKey: ['vendor-scores', period],
+    queryFn: () => vendorScoresApi.leaderboard(period) as Promise<any[]>,
+  });
+
+  const data: LeaderboardEntry[] = (apiData.length ? apiData : seedLeaderboard()).map((v: any, i: number): LeaderboardEntry => ({
+    rank: v.rank ?? i + 1,
+    prevRank: v.prevRank,
+    vendorId: v.vendor?.id ?? v.vendorId,
+    vendorName: v.vendor?.companyName ?? v.vendorName,
+    category: v.vendor?.serviceCategories?.[0] ?? v.category ?? 'GENERAL',
+    jobsCompleted: v.jobsCompleted,
+    avgRating: Number(v.avgRating),
+    avgResponseHours: Number(v.avgResponseHours),
+    reworkRate: Number(v.reworkRatePct ?? v.reworkRate ?? 0),
+    slaCompliance: Number(v.slaCompliancePct ?? v.slaCompliance ?? 0),
+    totalEarned: Number(v.totalEarnedAed ?? v.totalEarned ?? 0),
+    score: Number(v.compositeScore ?? v.score ?? 0),
+    badges: v.badges ?? [],
+  }));
 
   const rankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />;

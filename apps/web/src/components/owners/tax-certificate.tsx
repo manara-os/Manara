@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileBadge, Download, Calendar, CheckCircle2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { taxCertificatesApi } from '@/lib/api';
 
 interface Props {
   ownerName: string;
   ownerEmail?: string;
+  ownerId?: string;
 }
 
 const YEARS = [2024, 2025, 2026];
@@ -24,19 +27,53 @@ const mockAnnualNumbers = (year: number) => {
   return { gross: base, expenses, mgmtFee, vatCollected, netIncome };
 };
 
-export function TaxCertificate({ ownerName, ownerEmail }: Props) {
+export function TaxCertificate({ ownerName, ownerEmail, ownerId }: Props) {
   const [year, setYear] = useState(2025);
-  const [generated, setGenerated] = useState<{ year: number; ts: Date } | null>(null);
+  const [generated, setGenerated] = useState<{ year: number; ts: Date; ftaRef?: string } | null>(null);
 
-  const nums = mockAnnualNumbers(year);
+  const { data: existing } = useQuery({
+    queryKey: ['tax-certs', ownerId],
+    queryFn: () => taxCertificatesApi.list(ownerId!) as Promise<any[]>,
+    enabled: !!ownerId,
+  });
+
+  const certForYear = existing?.find((c: any) => c.taxYear === year);
+  const nums = certForYear
+    ? {
+        gross: Number(certForYear.grossIncomeAed),
+        expenses: Number(certForYear.expensesAed),
+        mgmtFee: Number(certForYear.mgmtFeeAed),
+        vatCollected: Number(certForYear.vatCollectedAed),
+        netIncome: Number(certForYear.netIncomeAed),
+      }
+    : mockAnnualNumbers(year);
+
+  const generateMutation = useMutation({
+    mutationFn: () => taxCertificatesApi.generate(ownerId!, year),
+    onSuccess: (cert: any) => {
+      toast.success(`Annual Income Certificate ${year} ready · FTA ref ${cert.ftaReference}`);
+      setGenerated({ year, ts: new Date(), ftaRef: cert.ftaReference });
+    },
+    onError: () => toast.error('Failed to generate certificate'),
+  });
+
+  const emailMutation = useMutation({
+    mutationFn: (id: string) => taxCertificatesApi.email(id, ownerEmail!),
+    onSuccess: () => toast.success(`Certificate ${year} emailed`),
+    onError: () => toast.error('Failed to email certificate'),
+  });
 
   const generate = () => {
-    toast.success(`Annual Income Certificate ${year} ready · FTA reference TC-${year}-${Date.now().toString().slice(-6)}`);
-    setGenerated({ year, ts: new Date() });
+    if (ownerId) generateMutation.mutate();
+    else {
+      toast.success(`Annual Income Certificate ${year} ready · FTA ref TC-${year}-${Date.now().toString().slice(-6)}`);
+      setGenerated({ year, ts: new Date() });
+    }
   };
 
   const emailToAccountant = () => {
-    toast.success(`Certificate ${year} emailed to your registered accountant`);
+    if (certForYear) emailMutation.mutate(certForYear.id);
+    else toast.success(`Certificate ${year} queued for email to your accountant`);
   };
 
   return (

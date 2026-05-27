@@ -274,7 +274,10 @@
       "Bash(curl -s -o /dev/null -w \"Web :3000 → %{http_code}\\\\n\" http://localhost:3000/)",
       "Bash(curl -s -o /dev/null -w \"API :3001 → %{http_code}\\\\n\" http://localhost:3001/api/v1/health)",
       "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(pnpm db:generate)",
+      "Bash(npx prisma *)",
+      "Bash(npx jest *)"
     ]
   }
 }

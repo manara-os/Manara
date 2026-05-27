@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calculator, TrendingUp, ChevronRight, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
 import { toast } from 'sonner';
+import { roiApi } from '@/lib/api';
 
 interface Scenario {
   id: string;
@@ -32,7 +34,24 @@ interface Props {
 }
 
 export function RoiSimulator({ baseAnnualRent = 140_000 }: Props) {
-  const [selected, setSelected] = useState<Scenario>(SCENARIOS[0]);
+  const { data: apiScenarios = [] } = useQuery({
+    queryKey: ['roi-scenarios'],
+    queryFn: () => roiApi.scenarios() as Promise<any[]>,
+  });
+
+  const SCENARIOS_LIVE: Scenario[] = apiScenarios.length
+    ? apiScenarios.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        icon: s.icon ?? '🛠',
+        capex: Number(s.capexAed),
+        rentUpliftPct: Number(s.rentUpliftPct),
+        description: s.description,
+        marketEvidence: s.marketEvidence ?? '',
+      }))
+    : SCENARIOS;
+
+  const [selected, setSelected] = useState<Scenario>(SCENARIOS_LIVE[0] ?? SCENARIOS[0]);
   const [vacancyDays, setVacancyDays] = useState(30);
 
   const result = useMemo(() => {
@@ -65,7 +84,7 @@ export function RoiSimulator({ baseAnnualRent = 140_000 }: Props) {
       <CardContent className="space-y-4">
         {/* Scenario picker */}
         <div className="grid grid-cols-3 gap-2">
-          {SCENARIOS.map((s) => (
+          {SCENARIOS_LIVE.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelected(s)}

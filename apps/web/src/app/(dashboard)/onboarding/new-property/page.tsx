@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  CheckCircle2, Circle, FileText, IdCard, Building2, FileSignature,
+  CheckCircle2, Circle, FileText, BadgeCheck as IdCard, Building2, FileSignature,
   CreditCard, FileCheck, ChevronRight, ChevronLeft, Upload,
   Briefcase, MapPin, Sparkles,
 } from 'lucide-react';

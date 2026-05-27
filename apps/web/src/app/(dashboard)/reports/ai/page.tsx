@@ -43,7 +43,7 @@ export default function AIReportsPage() {
 
   const needsEntity = persona === 'OWNER' || persona === 'TENANT' || persona === 'VENDOR';
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery<any>({
     queryKey: ['ai-report', persona, entityId],
     queryFn: () => api.get(`/ai/reports/${persona}`, { params: entityId ? { entityId } : {} }),
     enabled: !needsEntity || !!entityId,
@@ -107,7 +107,7 @@ export default function AIReportsPage() {
             >
               <option value="">— select a {persona.toLowerCase()} —</option>
               {entityOptions.map((e: any) => (
-                <option key={e.id} value={e.id}>{e.fullName ?? e.companyName ?? e.name}</option>
+                <option key={e.id} value={e.id}>{(e.fullName ?? e.companyName ?? e.name) as string}</option>
               ))}
             </select>
             <div className="flex-1" />

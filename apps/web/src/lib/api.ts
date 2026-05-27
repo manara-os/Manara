@@ -268,3 +268,75 @@ export const adminApi = {
   getPlatformStats: () => api.get('/admin/stats'),
   getSubscriptions: () => api.get('/admin/subscriptions'),
 };
+
+// ───────────────────────── Production push: 9 new features ─────────────────────────
+
+export const complianceApi = {
+  list: (params?: any) => api.get('/compliance', { params }),
+  kpis: () => api.get('/compliance/kpis'),
+  get: (id: string) => api.get(`/compliance/${id}`),
+  create: (data: any) => api.post('/compliance', data),
+  update: (id: string, data: any) => api.patch(`/compliance/${id}`, data),
+  renew: (id: string, newExpiryDate: string) => api.post(`/compliance/${id}/renew`, { newExpiryDate }),
+  delete: (id: string) => api.delete(`/compliance/${id}`),
+};
+
+export const receiptsApi = {
+  list: (ownerId: string) => api.get('/receipts', { params: { ownerId } }),
+  get: (id: string) => api.get(`/receipts/${id}`),
+  create: (data: any) => api.post('/receipts', data),
+  approve: (id: string) => api.post(`/receipts/${id}/approve`),
+  reject: (id: string, reason: string) => api.post(`/receipts/${id}/reject`, { reason }),
+  markPaid: (id: string) => api.post(`/receipts/${id}/mark-paid`),
+};
+
+export const taxCertificatesApi = {
+  list: (ownerId: string) => api.get('/tax-certificates', { params: { ownerId } }),
+  generate: (ownerId: string, taxYear: number) => api.post('/tax-certificates/generate', { ownerId, taxYear }),
+  email: (id: string, email: string) => api.post(`/tax-certificates/${id}/email`, { email }),
+};
+
+export const reviewsApi = {
+  list: (params?: any) => api.get('/reviews', { params }),
+  dashboard: () => api.get('/reviews/dashboard'),
+  create: (data: any) => api.post('/reviews', data),
+  respond: (id: string, response: string) => api.post(`/reviews/${id}/respond`, { response }),
+  aiDraft: (id: string) => api.post(`/reviews/${id}/ai-draft`),
+};
+
+export const npsApi = {
+  list: (campaignName?: string) => api.get('/nps', { params: campaignName ? { campaignName } : {} }),
+  dispatch: (campaignName?: string) => api.post('/nps/dispatch', { campaignName }),
+  respond: (id: string, score: number, comment?: string) => api.post(`/nps/${id}/respond`, { score, comment }),
+};
+
+export const bidsApi = {
+  forTicket: (ticketId: string) => api.get(`/bids/ticket/${ticketId}`),
+  submit: (ticketId: string, data: any) => api.post(`/bids/ticket/${ticketId}`, data),
+  accept: (bidId: string) => api.post(`/bids/${bidId}/accept`),
+  reject: (bidId: string) => api.post(`/bids/${bidId}/reject`),
+  withdraw: (bidId: string) => api.post(`/bids/${bidId}/withdraw`),
+};
+
+export const vendorScoresApi = {
+  leaderboard: (period?: '30D' | '90D' | 'YTD') => api.get('/vendor-scores/leaderboard', { params: period ? { period } : {} }),
+  recompute: () => api.post('/vendor-scores/recompute'),
+};
+
+export const aecbApi = {
+  history: (tenantId: string) => api.get(`/aecb/tenants/${tenantId}`),
+  optIn: (tenantId: string, optIn: boolean) => api.post(`/aecb/tenants/${tenantId}/opt-in`, { optIn }),
+  queueMonthly: (month?: string) => api.post('/aecb/queue-monthly', { month }),
+};
+
+export const whatsappApi = {
+  thread: (recipientType: 'tenant' | 'owner' | 'vendor', recipientId: string) =>
+    api.get('/whatsapp/thread', { params: { recipientType, recipientId } }),
+  send: (data: any) => api.post('/whatsapp/send', data),
+  markRead: (id: string) => api.post(`/whatsapp/${id}/read`),
+};
+
+export const roiApi = {
+  scenarios: () => api.get('/roi/scenarios'),
+  simulate: (data: any) => api.post('/roi/simulate', data),
+};

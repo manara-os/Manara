@@ -3,6 +3,7 @@ import { Inter, Noto_Kufi_Arabic } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { I18nProvider } from '@/lib/i18n/i18n-provider';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -68,7 +69,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <QueryProvider>
             <AuthProvider>
-              {children}
+              <I18nProvider>
+                {children}
+              </I18nProvider>
               <Toaster
                 position="top-right"
                 richColors

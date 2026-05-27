@@ -239,13 +239,13 @@ export default function OwnerDetailPage() {
       <RoiSimulator baseAnnualRent={Number(summary?.totalAnnualRent ?? 140_000)} />
 
       {/* Receipt Vault — every vendor invoice with before/after photos */}
-      <ReceiptVault ownerName={owner.fullName} />
+      <ReceiptVault ownerName={owner.fullName} ownerId={id} />
 
       {/* Tax Certificate — annual FTA-compliant income summary */}
-      <TaxCertificate ownerName={owner.fullName} ownerEmail={owner.email} />
+      <TaxCertificate ownerName={owner.fullName} ownerEmail={owner.email} ownerId={id} />
 
       {/* WhatsApp 2-way thread with AI in the loop */}
-      <WhatsAppThread recipientType="owner" recipientName={owner.fullName} recipientPhone={owner.phone} />
+      <WhatsAppThread recipientType="owner" recipientId={id} recipientName={owner.fullName} recipientPhone={owner.phone} />
 
       {/* Unit Grid */}
       {(portfolio?.owner?.properties ?? []).length > 0 && (

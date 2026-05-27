@@ -22,7 +22,18 @@ import { BillingModule } from './modules/subscriptions/billing.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
 import { ListingsModule } from './modules/listings/listings.module';
+import { ComplianceModule } from './modules/compliance/compliance.module';
+import { ReceiptsModule } from './modules/receipts/receipts.module';
+import { TaxCertificatesModule } from './modules/tax-certificates/tax-certificates.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { BidsModule } from './modules/bids/bids.module';
+import { VendorScoresModule } from './modules/vendor-scores/vendor-scores.module';
+import { AecbModule } from './modules/aecb/aecb.module';
+import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
+import { RoiModule } from './modules/roi/roi.module';
+import { PrivacyModule } from './modules/privacy/privacy.module';
 import { DatabaseModule } from './database/database.module';
+import { CryptoModule } from './common/crypto/crypto.module';
 import { QueuesModule } from './queues/queues.module';
 import { FilesModule } from './files/files.module';
 import { HealthController } from './health/health.controller';
@@ -81,6 +92,7 @@ import { validationSchema } from './config/validation';
 
     // ── Core Modules ──────────────────────────────────────
     DatabaseModule,
+    CryptoModule,
     FilesModule,
     AuthModule,
     WorkspacesModule,
@@ -101,6 +113,16 @@ import { validationSchema } from './config/validation';
     ReportsModule,
     CommunicationsModule,
     ListingsModule,
+    ComplianceModule,
+    ReceiptsModule,
+    TaxCertificatesModule,
+    ReviewsModule,
+    BidsModule,
+    VendorScoresModule,
+    AecbModule,
+    WhatsAppModule,
+    RoiModule,
+    PrivacyModule,
     QueuesModule,
   ],
 })

@@ -40,7 +40,7 @@ interface Props {
   recipientType: RecipientType;
   recipientId: string;
   recipientName?: string;
-  variant?: 'default' | 'outline' | 'ghost' | 'icon';
+  variant?: 'default' | 'outline' | 'ghost' | 'secondary';
   size?: 'sm' | 'default';
 }
 

@@ -403,6 +403,16 @@ model Workspace {
   propertyListings  PropertyListing[]
   commissions       Commission[]
   renewalAlerts     RenewalAlert[]
+  complianceItems   ComplianceItem[]
+  receipts          Receipt[]
+  taxCertificates   TaxCertificate[]
+  reviews           Review[]
+  npsResponses      NpsResponse[]
+  ticketBids        TicketBid[]
+  vendorScores     VendorScore[]
+  aecbReports       AecbReport[]
+  whatsappMessages  WhatsAppMessage[]
+  renovationScenarios RenovationScenario[]
 
   @@index([slug])
   @@index([status])
@@ -556,6 +566,7 @@ model Property {
   units           Unit[]
   listings        PropertyListing[]
   auditLogs       AuditLog[]
+  reviews         Review[]
 
   @@index([workspaceId, status])
   @@index([workspaceId, type])
@@ -596,6 +607,7 @@ model Unit {
   workspace           Workspace       @relation(fields: [workspaceId], references: [id])
   leases              Lease[]
   tickets             Ticket[]
+  receipts            Receipt[]
 
   @@unique([propertyId, unitNumber])
   @@index([workspaceId, occupancyStatus])
@@ -644,6 +656,8 @@ model Owner {
   properties          Property[]
   ownerSoas           OwnerSoa[]
   notifications       Notification[]
+  receipts            Receipt[]
+  taxCertificates     TaxCertificate[]
 
   @@index([workspaceId])
   @@index([phone])
@@ -691,6 +705,10 @@ model Tenant {
   rentCollections     RentCollection[]
   aiCalls             AiCall[]
   notifications       Notification[]
+  reviews             Review[]
+  npsResponses        NpsResponse[]
+  aecbReports         AecbReport[]
+  whatsappMessages    WhatsAppMessage[]
 
   @@index([workspaceId])
   @@index([phone])
@@ -1005,6 +1023,9 @@ model Vendor {
 
   workspace             Workspace    @relation(fields: [workspaceId], references: [id])
   tickets               Ticket[]     @relation("TicketVendor")
+  bids                  TicketBid[]
+  scores                VendorScore[]
+  receipts              Receipt[]
 
   @@index([workspaceId, status])
   @@index([workspaceId, isApproved])
@@ -1059,6 +1080,8 @@ model Ticket {
   tenant              Tenant?        @relation(fields: [raisedByTenantId], references: [id])
   vendor              Vendor?        @relation("TicketVendor", fields: [assignedVendorId], references: [id])
   expenses            Expense[]
+  bids                TicketBid[]
+  receipts            Receipt[]
 
   @@index([workspaceId, status])
   @@index([workspaceId, category])
@@ -1309,4 +1332,414 @@ model Webhook {
 
   @@index([workspaceId, isActive])
   @@map("webhooks")
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMPLIANCE TRACKING (UAE-specific licences / expiries)
+// ─────────────────────────────────────────────────────────────
+
+enum ComplianceCategory {
+  TRADE_LICENSE
+  VAT_FILING
+  RERA
+  DLD
+  EJARI
+  INSURANCE
+  STAFF_VISA
+  FIRE_SAFETY
+  CIVIL_DEFENCE
+  AML_KYC
+  OTHER
+}
+
+enum ComplianceStatus {
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+  RENEWAL_IN_PROGRESS
+  NOT_APPLICABLE
+}
+
+model ComplianceItem {
+  id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId      String              @map("workspace_id") @db.Uuid
+  category         ComplianceCategory
+  name             String              @db.VarChar(200)
+  referenceNumber  String?             @map("reference_number") @db.VarChar(100)
+  issuedDate       DateTime?           @map("issued_date") @db.Date
+  expiryDate       DateTime            @map("expiry_date") @db.Date
+  status           ComplianceStatus    @default(VALID)
+  responsibleUserId String?            @map("responsible_user_id") @db.Uuid
+  costAed          Decimal?            @map("cost_aed") @db.Decimal(10, 2)
+  reminderDaysBefore Int               @default(30) @map("reminder_days_before")
+  remindersSentCount Int               @default(0) @map("reminders_sent_count")
+  lastReminderAt   DateTime?           @map("last_reminder_at") @db.Timestamptz
+  documentId       String?             @map("document_id") @db.Uuid
+  notes            String?
+  meta             Json                @default("{}") @db.JsonB
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+
+  workspace        Workspace           @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, status, expiryDate])
+  @@index([workspaceId, category])
+  @@map("compliance_items")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RECEIPT VAULT (vendor invoices linked to owner statements)
+// ─────────────────────────────────────────────────────────────
+
+enum ReceiptStatus {
+  PENDING_APPROVAL
+  APPROVED
+  PAID
+  REJECTED
+  DISPUTED
+}
+
+model Receipt {
+  id              String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String         @map("workspace_id") @db.Uuid
+  ownerId         String?        @map("owner_id") @db.Uuid
+  unitId          String?        @map("unit_id") @db.Uuid
+  ticketId        String?        @map("ticket_id") @db.Uuid
+  vendorId        String?        @map("vendor_id") @db.Uuid
+  category        TicketCategory @default(OTHER)
+  description     String
+  vendorInvoiceNo String?        @map("vendor_invoice_no") @db.VarChar(100)
+  amount          Decimal        @db.Decimal(10, 2)
+  vatAmount       Decimal        @default(0) @map("vat_amount") @db.Decimal(10, 2)
+  currencyCode    String         @default("AED") @map("currency_code") @db.Char(3)
+  receiptDate     DateTime       @map("receipt_date") @db.Date
+  beforePhotoUrl  String?        @map("before_photo_url")
+  afterPhotoUrl   String?        @map("after_photo_url")
+  invoicePdfUrl   String?        @map("invoice_pdf_url")
+  approvedById    String?        @map("approved_by_id") @db.Uuid
+  approvedAt      DateTime?      @map("approved_at") @db.Timestamptz
+  status          ReceiptStatus  @default(PENDING_APPROVAL)
+  meta            Json           @default("{}") @db.JsonB
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id])
+  owner           Owner?         @relation(fields: [ownerId], references: [id])
+  unit            Unit?          @relation(fields: [unitId], references: [id])
+  ticket          Ticket?        @relation(fields: [ticketId], references: [id])
+  vendor          Vendor?        @relation(fields: [vendorId], references: [id])
+
+  @@index([workspaceId, ownerId, receiptDate])
+  @@index([workspaceId, status])
+  @@index([ticketId])
+  @@map("receipts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// TAX CERTIFICATES (annual FTA-compliant income summary)
+// ─────────────────────────────────────────────────────────────
+
+enum TaxCertificateStatus {
+  DRAFT
+  GENERATED
+  EMAILED
+  ARCHIVED
+}
+
+model TaxCertificate {
+  id               String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId      String                @map("workspace_id") @db.Uuid
+  ownerId          String                @map("owner_id") @db.Uuid
+  taxYear          Int                   @map("tax_year")
+  grossIncomeAed   Decimal               @default(0) @map("gross_income_aed") @db.Decimal(12, 2)
+  expensesAed      Decimal               @default(0) @map("expenses_aed") @db.Decimal(12, 2)
+  mgmtFeeAed       Decimal               @default(0) @map("mgmt_fee_aed") @db.Decimal(12, 2)
+  vatCollectedAed  Decimal               @default(0) @map("vat_collected_aed") @db.Decimal(12, 2)
+  netIncomeAed     Decimal               @default(0) @map("net_income_aed") @db.Decimal(12, 2)
+  ftaReference     String?               @unique @map("fta_reference") @db.VarChar(40)
+  pdfUrl           String?               @map("pdf_url")
+  status           TaxCertificateStatus  @default(DRAFT)
+  emailedAt        DateTime?             @map("emailed_at") @db.Timestamptz
+  emailedTo        String?               @map("emailed_to") @db.VarChar(200)
+  meta             Json                  @default("{}") @db.JsonB
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  workspace        Workspace             @relation(fields: [workspaceId], references: [id])
+  owner            Owner                 @relation(fields: [ownerId], references: [id])
+
+  @@unique([ownerId, taxYear])
+  @@index([workspaceId, taxYear])
+  @@map("tax_certificates")
+}
+
+// ─────────────────────────────────────────────────────────────
+// REVIEWS & NPS
+// ─────────────────────────────────────────────────────────────
+
+enum ReviewSource {
+  GOOGLE
+  BAYUT
+  PROPERTY_FINDER
+  DUBIZZLE
+  INTERNAL_NPS
+  WHATSAPP
+  EMAIL
+  IN_APP
+}
+
+enum ReviewSentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+model Review {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String          @map("workspace_id") @db.Uuid
+  source          ReviewSource
+  externalId      String?         @map("external_id") @db.VarChar(200)
+  authorName      String          @map("author_name") @db.VarChar(200)
+  rating          Int
+  ratingMax       Int             @default(5) @map("rating_max")
+  text            String
+  sentiment       ReviewSentiment @default(NEUTRAL)
+  propertyId      String?         @map("property_id") @db.Uuid
+  unitId          String?         @map("unit_id") @db.Uuid
+  tenantId        String?         @map("tenant_id") @db.Uuid
+  responded       Boolean         @default(false)
+  responseText    String?         @map("response_text")
+  respondedAt     DateTime?       @map("responded_at") @db.Timestamptz
+  respondedById   String?         @map("responded_by_id") @db.Uuid
+  aiDraftResponse String?         @map("ai_draft_response")
+  postedAt        DateTime        @map("posted_at") @db.Timestamptz
+  meta            Json            @default("{}") @db.JsonB
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id])
+  property        Property?       @relation(fields: [propertyId], references: [id])
+  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+
+  @@index([workspaceId, source, postedAt])
+  @@index([workspaceId, sentiment, responded])
+  @@map("reviews")
+}
+
+enum NpsStatus {
+  PENDING
+  SENT
+  RESPONDED
+  EXPIRED
+}
+
+model NpsResponse {
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String     @map("workspace_id") @db.Uuid
+  campaignName    String     @default("Quarterly NPS") @map("campaign_name") @db.VarChar(100)
+  tenantId        String?    @map("tenant_id") @db.Uuid
+  ownerId         String?    @map("owner_id") @db.Uuid
+  recipientPhone  String?    @map("recipient_phone") @db.VarChar(30)
+  recipientEmail  String?    @map("recipient_email") @db.VarChar(200)
+  score           Int?
+  comment         String?
+  status          NpsStatus  @default(PENDING)
+  sentAt          DateTime?  @map("sent_at") @db.Timestamptz
+  respondedAt     DateTime?  @map("responded_at") @db.Timestamptz
+  channel         String     @default("WHATSAPP") @db.VarChar(20)
+  meta            Json       @default("{}") @db.JsonB
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace       Workspace  @relation(fields: [workspaceId], references: [id])
+  tenant          Tenant?    @relation(fields: [tenantId], references: [id])
+
+  @@index([workspaceId, status, createdAt])
+  @@map("nps_responses")
+}
+
+// ─────────────────────────────────────────────────────────────
+// BID MARKETPLACE (vendors bid on open tickets)
+// ─────────────────────────────────────────────────────────────
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
+model TicketBid {
+  id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String     @map("workspace_id") @db.Uuid
+  ticketId        String     @map("ticket_id") @db.Uuid
+  vendorId        String     @map("vendor_id") @db.Uuid
+  amountAed       Decimal    @map("amount_aed") @db.Decimal(10, 2)
+  vatIncluded     Boolean    @default(true) @map("vat_included")
+  etaHours        Int        @map("eta_hours")
+  warrantyDays    Int        @default(30) @map("warranty_days")
+  message         String?
+  status          BidStatus  @default(PENDING)
+  aiRank          Int?       @map("ai_rank")
+  aiReason        String?    @map("ai_reason")
+  acceptedAt      DateTime?  @map("accepted_at") @db.Timestamptz
+  submittedAt     DateTime   @default(now()) @map("submitted_at") @db.Timestamptz
+  expiresAt       DateTime?  @map("expires_at") @db.Timestamptz
+  meta            Json       @default("{}") @db.JsonB
+
+  workspace       Workspace  @relation(fields: [workspaceId], references: [id])
+  ticket          Ticket     @relation(fields: [ticketId], references: [id])
+  vendor          Vendor     @relation(fields: [vendorId], references: [id])
+
+  @@unique([ticketId, vendorId])
+  @@index([workspaceId, status])
+  @@index([ticketId, status])
+  @@map("ticket_bids")
+}
+
+// ─────────────────────────────────────────────────────────────
+// VENDOR SCORES (computed nightly by job)
+// ─────────────────────────────────────────────────────────────
+
+model VendorScore {
+  id                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId        String    @map("workspace_id") @db.Uuid
+  vendorId           String    @map("vendor_id") @db.Uuid
+  periodStart        DateTime  @map("period_start") @db.Date
+  periodEnd          DateTime  @map("period_end") @db.Date
+  jobsCompleted      Int       @default(0) @map("jobs_completed")
+  avgRating          Decimal   @default(0) @map("avg_rating") @db.Decimal(3, 2)
+  avgResponseHours   Decimal   @default(0) @map("avg_response_hours") @db.Decimal(6, 2)
+  reworkRatePct      Decimal   @default(0) @map("rework_rate_pct") @db.Decimal(5, 2)
+  slaCompliancePct   Decimal   @default(0) @map("sla_compliance_pct") @db.Decimal(5, 2)
+  totalEarnedAed     Decimal   @default(0) @map("total_earned_aed") @db.Decimal(12, 2)
+  compositeScore     Decimal   @default(0) @map("composite_score") @db.Decimal(5, 2)
+  rank               Int?
+  prevRank           Int?      @map("prev_rank")
+  badges             Json      @default("[]") @db.JsonB
+  computedAt         DateTime  @default(now()) @map("computed_at") @db.Timestamptz
+
+  workspace          Workspace @relation(fields: [workspaceId], references: [id])
+  vendor             Vendor    @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, periodStart, periodEnd])
+  @@index([workspaceId, periodEnd, compositeScore])
+  @@map("vendor_scores")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AECB CREDIT REPORTING (Tenant opt-in)
+// ─────────────────────────────────────────────────────────────
+
+enum AecbReportStatus {
+  QUEUED
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  RETRY
+}
+
+model AecbReport {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String           @map("workspace_id") @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  reportingMonth  DateTime         @map("reporting_month") @db.Date
+  onTimePayment   Boolean          @default(true) @map("on_time_payment")
+  amountAed       Decimal          @default(0) @map("amount_aed") @db.Decimal(10, 2)
+  scoreAtReport   Int?             @map("score_at_report")
+  scoreDelta      Int?             @map("score_delta")
+  aecbReference   String?          @map("aecb_reference") @db.VarChar(80)
+  status          AecbReportStatus @default(QUEUED)
+  submittedAt     DateTime?        @map("submitted_at") @db.Timestamptz
+  failureReason   String?          @map("failure_reason")
+  meta            Json             @default("{}") @db.JsonB
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id])
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, reportingMonth])
+  @@index([workspaceId, status])
+  @@map("aecb_reports")
+}
+
+// ─────────────────────────────────────────────────────────────
+// WHATSAPP MESSAGES (2-way thread)
+// ─────────────────────────────────────────────────────────────
+
+enum WhatsAppDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum WhatsAppSender {
+  TENANT
+  OWNER
+  VENDOR
+  PM
+  AI
+  SYSTEM
+}
+
+enum WhatsAppDeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model WhatsAppMessage {
+  id              String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String                 @map("workspace_id") @db.Uuid
+  direction       WhatsAppDirection
+  sender          WhatsAppSender
+  tenantId        String?                @map("tenant_id") @db.Uuid
+  ownerId         String?                @map("owner_id") @db.Uuid
+  vendorId        String?                @map("vendor_id") @db.Uuid
+  recipientPhone  String                 @map("recipient_phone") @db.VarChar(30)
+  body            String
+  mediaUrl        String?                @map("media_url")
+  templateName    String?                @map("template_name") @db.VarChar(100)
+  twilioSid       String?                @unique @map("twilio_sid")
+  deliveryStatus  WhatsAppDeliveryStatus @default(QUEUED) @map("delivery_status")
+  isAiGenerated   Boolean                @default(false) @map("is_ai_generated")
+  parentMessageId String?                @map("parent_message_id") @db.Uuid
+  errorMessage    String?                @map("error_message")
+  sentAt          DateTime?              @map("sent_at") @db.Timestamptz
+  deliveredAt     DateTime?              @map("delivered_at") @db.Timestamptz
+  readAt          DateTime?              @map("read_at") @db.Timestamptz
+  meta            Json                   @default("{}") @db.JsonB
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace       Workspace              @relation(fields: [workspaceId], references: [id])
+  tenant          Tenant?                @relation(fields: [tenantId], references: [id])
+
+  @@index([workspaceId, tenantId, createdAt])
+  @@index([workspaceId, ownerId, createdAt])
+  @@index([workspaceId, vendorId, createdAt])
+  @@index([deliveryStatus])
+  @@map("whatsapp_messages")
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENOVATION SCENARIOS (ROI Simulator presets — workspace-scoped)
+// ─────────────────────────────────────────────────────────────
+
+model RenovationScenario {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String?   @map("workspace_id") @db.Uuid
+  name            String    @db.VarChar(100)
+  icon            String?   @db.VarChar(10)
+  description     String
+  capexAed        Decimal   @map("capex_aed") @db.Decimal(10, 2)
+  rentUpliftPct   Decimal   @map("rent_uplift_pct") @db.Decimal(5, 2)
+  marketEvidence  String?   @map("market_evidence")
+  vacancyDaysHint Int       @default(30) @map("vacancy_days_hint")
+  isDefault       Boolean   @default(false) @map("is_default")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
+  @@map("renovation_scenarios")
 }
