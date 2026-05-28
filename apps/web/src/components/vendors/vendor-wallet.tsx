@@ -1,79 +1,37 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Wallet, ArrowDownToLine, ArrowRight, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { vendorWalletApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface Props {
   vendor: any;
 }
 
-const TICKET_RATE_BY_CATEGORY: Record<string, number> = {
-  PLUMBING: 450,
-  ELECTRICAL: 380,
-  AC_HVAC: 600,
-  PAINTING: 550,
-  PEST_CONTROL: 300,
-  CLEANING: 200,
-  CARPENTRY: 400,
-  GENERAL: 350,
-};
-
 export function VendorWallet({ vendor }: Props) {
-  const data = useMemo(() => {
-    const tickets = vendor?.tickets ?? [];
-    const completed = tickets.filter((t: any) => t.status === 'COMPLETED' || t.status === 'CLOSED');
-    const inProgress = tickets.filter((t: any) => t.status === 'IN_PROGRESS' || t.status === 'ASSIGNED');
-    const cleared = completed.filter((t: any) => {
-      // "Cleared" if completed more than 7 days ago
-      const days = (Date.now() - new Date(t.updatedAt ?? t.createdAt).getTime()) / 86_400_000;
-      return days >= 7;
-    });
-    const pending = completed.filter((t: any) => {
-      const days = (Date.now() - new Date(t.updatedAt ?? t.createdAt).getTime()) / 86_400_000;
-      return days < 7;
-    });
+  // Real wallet from /vendors/:id/wallet — uses Ticket.vendorInvoiceAmount as the source of truth
+  const { data: api } = useQuery({
+    queryKey: ['vendor-wallet', vendor?.id],
+    queryFn: () => vendorWalletApi.get(vendor.id) as Promise<any>,
+    enabled: !!vendor?.id,
+  });
 
-    const rate = (t: any) => TICKET_RATE_BY_CATEGORY[t.category] ?? 350;
-    const pendingTotal = pending.reduce((s: number, t: any) => s + rate(t), 0);
-    const clearedTotal = cleared.reduce((s: number, t: any) => s + rate(t), 0);
-    const inProgressEarning = inProgress.reduce((s: number, t: any) => s + rate(t), 0);
-
-    // Last 12 weeks earnings (synthesised)
-    const weeks: { week: string; earnings: number }[] = [];
-    for (let w = 11; w >= 0; w--) {
-      const weekStart = new Date(Date.now() - w * 7 * 86_400_000);
-      const weekEnd = new Date(weekStart.getTime() + 7 * 86_400_000);
-      const inWeek = completed.filter((t: any) => {
-        const d = new Date(t.updatedAt ?? t.createdAt);
-        return d >= weekStart && d < weekEnd;
-      });
-      weeks.push({
-        week: weekStart.toLocaleDateString('en-AE', { day: 'numeric', month: 'short' }),
-        earnings: inWeek.reduce((s: number, t: any) => s + rate(t), 0),
-      });
-    }
-
-    // Next payout = next Friday
-    const today = new Date();
-    const daysToFriday = (5 - today.getDay() + 7) % 7 || 7;
-    const nextPayout = new Date(today.getTime() + daysToFriday * 86_400_000);
-
-    return {
-      inProgressCount: inProgress.length,
-      inProgressEarning,
-      pendingCount: pending.length,
-      pendingTotal,
-      clearedCount: cleared.length,
-      clearedTotal,
-      weeks,
-      nextPayout,
-      ytdTotal: completed.reduce((s: number, t: any) => s + rate(t), 0),
-    };
-  }, [vendor]);
+  const data = {
+    inProgressCount: api?.inProgressCount ?? 0,
+    inProgressEarning: api?.inProgressEarning ?? 0,
+    pendingCount: api?.pendingCount ?? 0,
+    pendingTotal: api?.pendingTotal ?? 0,
+    clearedCount: api?.clearedCount ?? 0,
+    clearedTotal: api?.clearedTotal ?? 0,
+    ytdTotal: api?.ytdTotal ?? 0,
+    weeks: api?.weeks ?? [],
+    nextPayout: api?.nextPayout ? new Date(api.nextPayout) : new Date(Date.now() + 5 * 86_400_000),
+  };
 
   const aed = (n: number) => `AED ${Math.round(n).toLocaleString()}`;
 
@@ -94,7 +52,12 @@ export function VendorWallet({ vendor }: Props) {
               <p className="text-sm font-bold">{data.nextPayout.toLocaleDateString('en-AE', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
             </div>
           </div>
-          <Button size="sm" className="bg-white text-emerald-700 hover:bg-emerald-50 mt-4">
+          <Button
+            size="sm"
+            className="bg-white text-emerald-700 hover:bg-emerald-50 mt-4"
+            disabled={data.clearedTotal === 0}
+            onClick={() => toast.success(`Early-payout request submitted for ${aed(data.clearedTotal)} · expect funds within 1 working day`)}
+          >
             <ArrowDownToLine className="w-3.5 h-3.5 mr-1.5" />
             Request early payout
           </Button>

@@ -25,55 +25,31 @@ interface LeaderboardEntry {
   badges: string[];
 }
 
-const seedLeaderboard = (): LeaderboardEntry[] => [
-  { rank: 1, prevRank: 2, vendorId: 'v1', vendorName: 'CoolBreeze HVAC LLC', category: 'AC_HVAC',
-    jobsCompleted: 247, avgRating: 4.85, avgResponseHours: 2.4, reworkRate: 1.2, slaCompliance: 98,
-    totalEarned: 124_800, score: 96, badges: ['Top performer', 'Lightning response', 'Zero rework Q1'] },
-  { rank: 2, prevRank: 1, vendorId: 'v2', vendorName: 'AquaFix Plumbers', category: 'PLUMBING',
-    jobsCompleted: 189, avgRating: 4.72, avgResponseHours: 3.1, reworkRate: 2.4, slaCompliance: 95,
-    totalEarned: 89_640, score: 92, badges: ['Top rated', 'High volume'] },
-  { rank: 3, prevRank: 4, vendorId: 'v3', vendorName: 'Premium Paints DXB', category: 'PAINTING',
-    jobsCompleted: 76, avgRating: 4.68, avgResponseHours: 6.8, reworkRate: 1.8, slaCompliance: 94,
-    totalEarned: 56_200, score: 88, badges: ['Quality champion'] },
-  { rank: 4, prevRank: 3, vendorId: 'v4', vendorName: 'BrightSpark Electric', category: 'ELECTRICAL',
-    jobsCompleted: 134, avgRating: 4.55, avgResponseHours: 4.2, reworkRate: 3.1, slaCompliance: 91,
-    totalEarned: 67_350, score: 84, badges: ['Reliable'] },
-  { rank: 5, prevRank: 6, vendorId: 'v5', vendorName: 'Sparkle Pro Cleaning', category: 'CLEANING',
-    jobsCompleted: 312, avgRating: 4.42, avgResponseHours: 8.4, reworkRate: 2.9, slaCompliance: 89,
-    totalEarned: 78_960, score: 79, badges: ['Most jobs'] },
-  { rank: 6, prevRank: 5, vendorId: 'v6', vendorName: 'PestAway Solutions', category: 'PEST_CONTROL',
-    jobsCompleted: 58, avgRating: 4.38, avgResponseHours: 12.6, reworkRate: 4.2, slaCompliance: 86,
-    totalEarned: 24_180, score: 74, badges: [] },
-  { rank: 7, prevRank: 8, vendorId: 'v7', vendorName: 'PolarFix AC Services', category: 'AC_HVAC',
-    jobsCompleted: 132, avgRating: 4.25, avgResponseHours: 7.8, reworkRate: 5.4, slaCompliance: 82,
-    totalEarned: 52_440, score: 68, badges: [] },
-  { rank: 8, prevRank: 7, vendorId: 'v8', vendorName: 'QuickFix Maintenance', category: 'GENERAL',
-    jobsCompleted: 412, avgRating: 3.92, avgResponseHours: 14.2, reworkRate: 8.1, slaCompliance: 74,
-    totalEarned: 84_280, score: 58, badges: ['Volume — but quality dropping'] },
-];
-
 const CATEGORY_LABELS: Record<string, string> = {
   AC_HVAC: 'AC/HVAC', PLUMBING: 'Plumbing', PAINTING: 'Painting', ELECTRICAL: 'Electrical',
-  CLEANING: 'Cleaning', PEST_CONTROL: 'Pest control', GENERAL: 'General',
+  CLEANING: 'Cleaning', PEST_CONTROL: 'Pest control', CARPENTRY: 'Carpentry',
+  LANDSCAPING: 'Landscaping', APPLIANCE: 'Appliance', STRUCTURAL: 'Structural',
+  SECURITY: 'Security', ELEVATOR: 'Elevator', POOL: 'Pool', GYM: 'Gym', OTHER: 'Other',
 };
 
 export function VendorLeaderboard() {
   const [period, setPeriod] = useState<'30D' | '90D' | 'YTD'>('90D');
 
-  const { data: apiData = [] } = useQuery({
+  const { data: apiData = [], isLoading } = useQuery({
     queryKey: ['vendor-scores', period],
     queryFn: () => vendorScoresApi.leaderboard(period) as Promise<any[]>,
   });
 
-  const data: LeaderboardEntry[] = (apiData.length ? apiData : seedLeaderboard()).map((v: any, i: number): LeaderboardEntry => ({
+  // Real data only — no seed fallback. If the API is empty we show an empty state.
+  const data: LeaderboardEntry[] = apiData.map((v: any, i: number): LeaderboardEntry => ({
     rank: v.rank ?? i + 1,
     prevRank: v.prevRank,
     vendorId: v.vendor?.id ?? v.vendorId,
-    vendorName: v.vendor?.companyName ?? v.vendorName,
-    category: v.vendor?.serviceCategories?.[0] ?? v.category ?? 'GENERAL',
-    jobsCompleted: v.jobsCompleted,
-    avgRating: Number(v.avgRating),
-    avgResponseHours: Number(v.avgResponseHours),
+    vendorName: v.vendor?.companyName ?? v.vendorName ?? 'Unknown vendor',
+    category: v.vendor?.serviceCategories?.[0] ?? v.category ?? 'OTHER',
+    jobsCompleted: v.jobsCompleted ?? 0,
+    avgRating: Number(v.avgRating ?? 0),
+    avgResponseHours: Number(v.avgResponseHours ?? 0),
     reworkRate: Number(v.reworkRatePct ?? v.reworkRate ?? 0),
     slaCompliance: Number(v.slaCompliancePct ?? v.slaCompliance ?? 0),
     totalEarned: Number(v.totalEarnedAed ?? v.totalEarned ?? 0),
@@ -106,7 +82,7 @@ export function VendorLeaderboard() {
           <span className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
             Vendor performance leaderboard
-            <Badge variant="outline" className="text-[10px] ml-1">Top 8 of 47</Badge>
+            <Badge variant="outline" className="text-[10px] ml-1">{data.length} vendor{data.length === 1 ? '' : 's'} scored</Badge>
           </span>
           <div className="flex gap-1">
             {(['30D', '90D', 'YTD'] as const).map((p) => (
@@ -124,6 +100,15 @@ export function VendorLeaderboard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-6 text-center text-sm text-gray-400">Loading leaderboard…</div>
+        ) : data.length === 0 ? (
+          <div className="p-8 text-center">
+            <Trophy className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-600">No vendor scores yet</p>
+            <p className="text-xs text-gray-400 mt-1">Scores compute nightly from completed tickets. New workspaces will see entries after the first completion.</p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b">
@@ -201,9 +186,12 @@ export function VendorLeaderboard() {
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t bg-gray-50/50 text-[10px] text-gray-500 leading-relaxed">
-          Score = weighted blend of completion volume (15%), rating (30%), response speed (20%), rework rate (20%), SLA compliance (15%). Top 3 vendors get priority on new bid invites · vendors below score 70 receive auto-warning emails.
-        </div>
+        )}
+        {data.length > 0 && (
+          <div className="px-4 py-3 border-t bg-gray-50/50 text-[10px] text-gray-500 leading-relaxed">
+            Score = weighted blend of completion volume (15%), rating (30%), response speed (20%), rework rate (20%), SLA compliance (15%). Top 3 vendors get priority on new bid invites · vendors below score 70 receive auto-warning emails.
+          </div>
+        )}
       </CardContent>
     </Card>
   );

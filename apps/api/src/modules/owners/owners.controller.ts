@@ -42,6 +42,18 @@ export class OwnersController {
     return this.ownersService.getPortfolio(req.workspaceId, id);
   }
 
+  @Get(':id/investor-dashboard')
+  @ApiOperation({ summary: 'Investor dashboard with real trailing-12 P&L, YoY, NOI per property, occupancy heat' })
+  getInvestorDashboard(@Request() req: any, @Param('id') id: string) {
+    return this.ownersService.getInvestorDashboard(req.workspaceId, id);
+  }
+
+  @Get(':id/market-intel')
+  @ApiOperation({ summary: 'Per-unit vs-RERA-index pricing + workspace peer comparables' })
+  getMarketIntel(@Request() req: any, @Param('id') id: string) {
+    return this.ownersService.getMarketIntel(req.workspaceId, id);
+  }
+
   @Get(':id/statement')
   @ApiOperation({ summary: 'Get owner income statement for a date range' })
   getStatement(

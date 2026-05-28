@@ -204,6 +204,8 @@ export const ownersApi = {
   list: (params?: any) => api.get('/owners', { params }),
   get: (id: string) => api.get(`/owners/${id}`),
   getPortfolioById: (id: string) => api.get(`/owners/${id}/portfolio`),
+  getInvestorDashboard: (id: string) => api.get(`/owners/${id}/investor-dashboard`),
+  getMarketIntel: (id: string) => api.get(`/owners/${id}/market-intel`),
   getStatement: (id: string, startDate: string, endDate: string) =>
     api.get(`/owners/${id}/statement`, { params: { startDate, endDate } }),
   create: (data: any) => api.post('/owners', data),
@@ -321,6 +323,10 @@ export const bidsApi = {
 export const vendorScoresApi = {
   leaderboard: (period?: '30D' | '90D' | 'YTD') => api.get('/vendor-scores/leaderboard', { params: period ? { period } : {} }),
   recompute: () => api.post('/vendor-scores/recompute'),
+};
+
+export const vendorWalletApi = {
+  get: (vendorId: string) => api.get(`/vendors/${vendorId}/wallet`),
 };
 
 export const aecbApi = {

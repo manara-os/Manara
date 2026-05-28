@@ -39,6 +39,13 @@ export class VendorsController {
     return this.vendorsService.getPerformance(req.workspaceId, id);
   }
 
+  @Get(':id/wallet')
+  @ApiOperation({ summary: 'Vendor wallet — real earnings from ticket invoices, weekly trend, next payout' })
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.VENDOR)
+  getWallet(@Request() req: any, @Param('id') id: string) {
+    return this.vendorsService.getWallet(req.workspaceId, id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Add a new vendor' })
   @Roles(UserRole.PM_ADMIN)

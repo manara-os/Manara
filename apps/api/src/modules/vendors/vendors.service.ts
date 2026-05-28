@@ -73,6 +73,91 @@ export class VendorsService {
     };
   }
 
+  /**
+   * Vendor wallet — real earnings from ticket invoices.
+   *
+   *   - cleared: ticket completed/closed AND >7 days old (payout cleared)
+   *   - pending: ticket completed/closed within last 7 days (awaiting payout)
+   *   - inProgress: ticket ASSIGNED/IN_PROGRESS (estimated)
+   *
+   * Uses Ticket.vendorInvoiceAmount when present; falls back to per-category default rate.
+   */
+  async getWallet(workspaceId: string, vendorId: string) {
+    const FALLBACK_RATES: Record<string, number> = {
+      PLUMBING: 450, ELECTRICAL: 380, AC_HVAC: 600, PAINTING: 550,
+      PEST_CONTROL: 300, CLEANING: 200, CARPENTRY: 400,
+      LANDSCAPING: 320, APPLIANCE: 420, SECURITY: 380, OTHER: 350,
+    };
+    const rate = (t: any) =>
+      Number(t.vendorInvoiceAmount ?? 0) || FALLBACK_RATES[t.category] || 350;
+
+    const tickets = await this.prisma.ticket.findMany({
+      where: { workspaceId, assignedVendorId: vendorId },
+      select: {
+        id: true,
+        category: true,
+        status: true,
+        vendorInvoiceAmount: true,
+        invoiceApprovedAt: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+
+    const now = Date.now();
+    const dayMs = 86_400_000;
+
+    const inProgress = tickets.filter(t => ['ASSIGNED', 'IN_PROGRESS'].includes(t.status));
+    const completed  = tickets.filter(t => ['COMPLETED', 'CLOSED'].includes(t.status));
+    const pending    = completed.filter(t => {
+      const ref = t.invoiceApprovedAt ?? t.completedAt ?? t.updatedAt;
+      return ref && (now - new Date(ref).getTime()) < 7 * dayMs;
+    });
+    const cleared    = completed.filter(t => {
+      const ref = t.invoiceApprovedAt ?? t.completedAt ?? t.updatedAt;
+      return !ref || (now - new Date(ref).getTime()) >= 7 * dayMs;
+    });
+
+    // Last 12 rolling weeks
+    const weeks: { week: string; earnings: number; count: number; weekStart: string }[] = [];
+    for (let w = 11; w >= 0; w--) {
+      const ws = new Date(now - (w + 1) * 7 * dayMs);
+      const we = new Date(now - w * 7 * dayMs);
+      const inWeek = completed.filter(t => {
+        const ref = t.invoiceApprovedAt ?? t.completedAt ?? t.updatedAt;
+        if (!ref) return false;
+        const d = new Date(ref);
+        return d >= ws && d < we;
+      });
+      weeks.push({
+        week: ws.toLocaleDateString('en-AE', { day: 'numeric', month: 'short' }),
+        weekStart: ws.toISOString(),
+        earnings: Math.round(inWeek.reduce((s, t) => s + rate(t), 0)),
+        count: inWeek.length,
+      });
+    }
+
+    const today = new Date(now);
+    const daysToFriday = (5 - today.getDay() + 7) % 7 || 7;
+    const nextPayout = new Date(now + daysToFriday * dayMs);
+
+    return {
+      inProgressCount: inProgress.length,
+      inProgressEarning: Math.round(inProgress.reduce((s, t) => s + rate(t), 0)),
+      pendingCount: pending.length,
+      pendingTotal: Math.round(pending.reduce((s, t) => s + rate(t), 0)),
+      clearedCount: cleared.length,
+      clearedTotal: Math.round(cleared.reduce((s, t) => s + rate(t), 0)),
+      ytdTotal: Math.round(completed.reduce((s, t) => s + rate(t), 0)),
+      weeks,
+      nextPayout: nextPayout.toISOString(),
+      currencyCode: 'AED',
+    };
+  }
+
   async create(workspaceId: string, dto: {
     userId?: string;
     companyName: string;

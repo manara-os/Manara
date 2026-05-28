@@ -287,11 +287,11 @@ export default function OwnerDetailPage() {
       {/* PMA Signing Pipeline */}
       <PmaSigningPipeline ownerId={id} currentStage={owner.meta?.pmaSigningStage ?? (owner.pmaStatus === 'ACTIVE' ? 'ACTIVE' : 'DRAFT')} />
 
-      {/* Investor Dashboard — asset-level ROI, P&L, YoY, occupancy heat */}
-      {portfolio && <InvestorDashboard portfolio={portfolio} />}
+      {/* Investor Dashboard — asset-level ROI, P&L, YoY, occupancy heat (real GL data) */}
+      <InvestorDashboard ownerId={id} portfolio={portfolio} />
 
       {/* Market Intel — live RERA + Bayut/PF comparables */}
-      {portfolio && <MarketIntel portfolio={portfolio} />}
+      <MarketIntel ownerId={id} />
 
       {/* ROI Simulator — renovation payback */}
       <RoiSimulator baseAnnualRent={Number(summary?.totalAnnualRent ?? 140_000)} />

@@ -50,10 +50,22 @@ export default function AIReportsPage() {
   });
 
   const report: any = (data as any)?.data ?? data;
+
+  // The axios interceptor already unwraps { success, data, timestamp } → so api.get returns the inner value.
+  // But some endpoints (e.g. /tenants) return another { data, meta } wrapper from the controller.
+  // unwrapList drills through whichever shape we get and returns the array.
+  const unwrapList = (raw: any): any[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;            // single-wrap: { data: [...] }
+    if (Array.isArray(raw?.data?.data)) return raw.data.data; // double-wrap: { data: { data: [...] } }
+    return [];
+  };
+
   const entityOptions = (
-    persona === 'OWNER'  ? ((ownersList as any)?.data ?? ownersList ?? []) :
-    persona === 'TENANT' ? ((tenantsList as any)?.data?.data ?? (tenantsList as any)?.data ?? tenantsList ?? []) :
-    persona === 'VENDOR' ? ((vendorsList as any)?.data ?? vendorsList ?? []) :
+    persona === 'OWNER'  ? unwrapList(ownersList) :
+    persona === 'TENANT' ? unwrapList(tenantsList) :
+    persona === 'VENDOR' ? unwrapList(vendorsList) :
     []
   );
 

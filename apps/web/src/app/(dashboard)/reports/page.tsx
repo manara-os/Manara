@@ -94,10 +94,10 @@ function StackBar({ segments }: { segments: { label: string; value: number; colo
 // 4-section Master Dashboard
 // ─────────────────────────────────────────────────────────────────────
 
-function MasterDashboard() {
+function MasterDashboard({ period }: { period: string }) {
   const { data, isLoading } = useQuery({
-    queryKey: ['reports-master-dashboard'],
-    queryFn: () => api.get('/reports/master-dashboard'),
+    queryKey: ['reports-master-dashboard', period],
+    queryFn: () => api.get('/reports/master-dashboard', { params: period ? { period } : {} }),
     refetchInterval: 60_000,
   });
 
@@ -295,31 +295,29 @@ export default function ReportsPage() {
         </Link>
       </div>
 
-      <MasterDashboard />
+      {/* Global period chips — apply to BOTH Master Dashboard and Detailed Reports */}
+      <div className="flex items-center gap-1 flex-wrap pt-1">
+        <span className="text-[10px] uppercase tracking-wide text-gray-400 font-bold mr-1">Period:</span>
+        {PERIOD_PRESETS.map((p) => (
+          <button
+            key={p.key || 'default'}
+            onClick={() => setPeriodPreset(p.key)}
+            className={`text-[11px] px-2.5 py-1 rounded-full font-medium border transition-colors ${
+              periodPreset === p.key
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+        <span className="text-[10px] text-gray-400 ml-2 italic">applies to KPIs + detailed reports</span>
+      </div>
+
+      <MasterDashboard period={periodPreset} />
 
       <div className="pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">Detailed reports</h2>
-
-          {/* Global date period chips — apply to ALL detailed tabs */}
-          <div className="flex items-center gap-1 flex-wrap">
-            <span className="text-[10px] uppercase tracking-wide text-gray-400 font-bold mr-1">Period:</span>
-            {PERIOD_PRESETS.map((p) => (
-              <button
-                key={p.key || 'default'}
-                onClick={() => setPeriodPreset(p.key)}
-                className={`text-[11px] px-2.5 py-1 rounded-full font-medium border transition-colors ${
-                  periodPreset === p.key
-                    ? 'bg-amber-600 text-white border-amber-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Detailed reports</h2>
         <div className="flex gap-1 border-b border-gray-200 mb-4 flex-wrap">
           {REPORT_TABS.map((t) => (
             <button

@@ -54,7 +54,7 @@ export class ReportsController {
 
   @Get('master-dashboard')
   @ApiOperation({ summary: '4-section master dashboard: Operations, Inventory, Leasing & Renewals, Financials' })
-  getMasterDashboard(@Request() req: any) {
-    return this.reportsService.getMasterDashboard(req.workspaceId);
+  getMasterDashboard(@Request() req: any, @Query('period') period?: string) {
+    return this.reportsService.getMasterDashboard(req.workspaceId, period);
   }
 }
