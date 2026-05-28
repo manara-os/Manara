@@ -8,7 +8,8 @@ Everything you need to go from "platform built" to "first paying customer."
 | **[02-demo-script.md](./02-demo-script.md)** | 15-minute live demo walkthrough | The actual demo. Memorise the first 30 seconds. |
 | **[03-followup-emails.md](./03-followup-emails.md)** | 5 follow-up email templates | Day 0 / Day 3 / Day 7 / Pilot agreement / Referral ask |
 | **[04-prospect-list.md](./04-prospect-list.md)** | 50 UAE PM companies + outreach playbook | Start working through Tier 2 first |
-| **[05-deployment-guide.md](./05-deployment-guide.md)** | Step-by-step prod deployment | Before sharing the URL with anyone |
+| **[05-deployment-guide.md](./05-deployment-guide.md)** | Step-by-step prod deployment (click-by-click) | When you sit down to deploy |
+| **[06-deployment-recommendation.md](./06-deployment-recommendation.md)** | Which platforms to use and why (Vercel + Railway + S3) | Before you start — read first |
 
 ---
 
