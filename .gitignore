@@ -52,3 +52,11 @@ logs
 
 # Sentry
 .sentryclirc
+
+# Office lock files (Word / Excel / PowerPoint owner-files)
+~$*
+*.~lock.*
+
+# macOS
+.DS_Store
+
