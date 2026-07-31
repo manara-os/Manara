@@ -1,6 +1,27 @@
+// Deployed backend (Railway) and frontend (Vercel). Setting NEXT_PUBLIC_API_URL /
+// NEXT_PUBLIC_APP_URL in the environment still wins; these are only the fallbacks
+// so a production build works without any dashboard configuration.
+const PROD_API_URL = 'https://api-production-24b5.up.railway.app/api/v1';
+const PROD_APP_URL = 'https://manara-os.vercel.app';
+
+const isProd = process.env.NODE_ENV === 'production';
+
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_URL || (isProd ? PROD_API_URL : 'http://localhost:3001/api/v1');
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL || (isProd ? PROD_APP_URL : 'http://localhost:3000');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Inlined at build time, so `process.env.NEXT_PUBLIC_API_URL` in client code
+  // resolves to the value computed above rather than being undefined.
+  env: {
+    NEXT_PUBLIC_API_URL: apiUrl,
+    NEXT_PUBLIC_APP_URL: appUrl,
+  },
+
   poweredByHeader: false,
   compress: true,
 
@@ -24,15 +45,12 @@ const nextConfig = {
     },
   ],
 
-  rewrites: async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/:path*`,
-      },
-    ];
-  },
+  rewrites: async () => [
+    {
+      source: '/api/:path*',
+      destination: `${apiUrl}/:path*`,
+    },
+  ],
 
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
