@@ -74,31 +74,34 @@ class ApiClient {
     );
   }
 
+  // The response interceptor above unwraps the `{ success, data }` envelope and
+  // resolves to the payload itself, so every call below settles as T rather than
+  // AxiosResponse<T>. Axios cannot express that, hence the assertions.
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.instance.get(url, config);
+    return this.instance.get(url, config) as unknown as Promise<T>;
   }
 
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.instance.post(url, data, config);
+    return this.instance.post(url, data, config) as unknown as Promise<T>;
   }
 
   async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.instance.patch(url, data, config);
+    return this.instance.patch(url, data, config) as unknown as Promise<T>;
   }
 
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    return this.instance.put(url, data, config);
+    return this.instance.put(url, data, config) as unknown as Promise<T>;
   }
 
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    return this.instance.delete(url, config);
+    return this.instance.delete(url, config) as unknown as Promise<T>;
   }
 
   async uploadFile<T>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
     return this.instance.post(url, formData, {
       ...config,
       headers: { ...config?.headers, 'Content-Type': 'multipart/form-data' },
-    });
+    }) as unknown as Promise<T>;
   }
 }
 
