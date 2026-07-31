@@ -3,11 +3,17 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "PATH=/Users/amit/.nvm/versions/node/v20.20.2/bin:$PATH npm run dev"],
-      "cwd": "/Users/amit/Desktop/Property Management flows/Manara OS Claude Code/apps/web",
-      "port": 3000,
-      "autoPort": false
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "apps/web",
+      "port": 3000
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "apps/api",
+      "port": 3001
     }
   ]
 }

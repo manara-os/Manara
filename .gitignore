@@ -60,3 +60,9 @@ logs
 # macOS
 .DS_Store
 
+# Vercel
+.vercel
+.env*
+# ...but keep the committed templates (this must follow .env* to win)
+!.env.example
+!.env.production.example
