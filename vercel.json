@@ -3,11 +3,7 @@
   "buildCommand": "npm run build --workspace=apps/web",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
-  "installCommand": "npm ci",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@manara_api_url",
-    "NEXT_PUBLIC_APP_URL": "@manara_app_url"
-  },
+  "installCommand": "npm ci --workspace=apps/web --include-workspace-root",
   "headers": [
     {
       "source": "/(.*)",

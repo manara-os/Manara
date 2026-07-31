@@ -47,6 +47,9 @@ import { validationSchema } from './config/validation';
     // ── Config ────────────────────────────────────────────
     ConfigModule.forRoot({
       isGlobal: true,
+      // Local dev reads apps/api/.env then falls back to the repo-root .env.
+      // In production (Railway) no file exists and real env vars are used.
+      envFilePath: ['.env', '../../.env'],
       load: [configuration],
       validationSchema,
       cache: true,

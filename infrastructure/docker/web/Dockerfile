@@ -2,23 +2,21 @@
 # MANARA OS — WEB DOCKERFILE (Multi-stage Next.js)
 # ═══════════════════════════════════════════════════════════════
 
-ARG NODE_VERSION=20-alpine
-
-FROM node:${NODE_VERSION} AS base
-RUN apk add --no-cache dumb-init
+FROM node:20-alpine AS base
+RUN apk add --no-cache dumb-init python3 make g++ libc6-compat
 WORKDIR /app
 
 FROM base AS deps
 COPY package*.json ./
 COPY apps/web/package*.json apps/web/
 COPY packages/shared/package*.json packages/shared/
-RUN npm ci && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 FROM base AS dev-deps
 COPY package*.json ./
 COPY apps/web/package*.json apps/web/
 COPY packages/shared/package*.json packages/shared/
-RUN npm ci && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 FROM dev-deps AS builder
 COPY . .

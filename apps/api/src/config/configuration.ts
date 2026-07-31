@@ -1,6 +1,6 @@
 export default () => ({
   nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.API_PORT || '3001', 10),
+  port: parseInt(process.env.PORT || process.env.API_PORT || '3001', 10),
   apiPrefix: process.env.API_PREFIX || 'api/v1',
   appVersion: process.env.APP_VERSION || '3.0.0',
 

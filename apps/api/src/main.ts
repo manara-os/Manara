@@ -20,7 +20,8 @@ async function bootstrap() {
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('API_PORT', 3001);
+  // PaaS providers (Railway, Render, Heroku) inject PORT; API_PORT is the local override.
+  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
   const apiPrefix = configService.get<string>('API_PREFIX', 'api/v1');
   const corsOrigins = configService
     .get<string>('CORS_ORIGINS', 'http://localhost:3000')

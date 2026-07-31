@@ -2,11 +2,9 @@
 # MANARA OS — API DOCKERFILE (Multi-stage)
 # ═══════════════════════════════════════════════════════════════
 
-ARG NODE_VERSION=20-alpine
-
 # ── Base ─────────────────────────────────────────────────────
-FROM node:${NODE_VERSION} AS base
-RUN apk add --no-cache dumb-init
+FROM node:20-alpine AS base
+RUN apk add --no-cache dumb-init python3 make g++ libc6-compat openssl
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -16,7 +14,7 @@ COPY package*.json ./
 COPY apps/api/package*.json apps/api/
 COPY packages/database/package*.json packages/database/
 COPY packages/shared/package*.json packages/shared/
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production --legacy-peer-deps && npm cache clean --force
 
 # ── Dev Dependencies ─────────────────────────────────────────
 FROM base AS dev-deps
@@ -24,7 +22,7 @@ COPY package*.json ./
 COPY apps/api/package*.json apps/api/
 COPY packages/database/package*.json packages/database/
 COPY packages/shared/package*.json packages/shared/
-RUN npm ci && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 # ── Builder ──────────────────────────────────────────────────
 FROM dev-deps AS builder
