@@ -15,8 +15,10 @@ RUN npm ci --workspace=apps/api --workspace=packages/shared --workspace=packages
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# The API imports `@prisma/client` types directly, so the client must be
+# generated BEFORE nest build or the compiler sees the ungenerated stub.
+RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
 RUN npm run build:api
-RUN npx --prefix apps/api prisma generate --schema=packages/database/prisma/schema.prisma
 
 # ---- runner stage ----
 FROM node:20-alpine AS runner
