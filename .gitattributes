@@ -1,0 +1,5 @@
+# Shell scripts must keep LF endings: this repo is developed on Windows with
+# autocrlf enabled, and a CRLF shebang makes Linux containers fail with a
+# "not found" error that looks identical to a missing binary.
+*.sh text eol=lf
+Dockerfile text eol=lf

@@ -46,10 +46,15 @@ COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.j
 # unless the directory already exists and belongs to it.
 RUN mkdir -p /app/logs && chown nestjs:nodejs /app/logs
 
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
+
 USER nestjs
 EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:3001/api/v1/health || exit 1
 
-CMD ["node", "dist/main.js"]
+# Migrations run here rather than in a platform start-command, so local runs
+# and deployed runs take the identical startup path.
+CMD ["./docker-entrypoint.sh"]

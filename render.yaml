@@ -20,9 +20,10 @@ services:
     dockerContext: .
     healthCheckPath: /api/v1/health
     autoDeploy: true
-    # Free instances get 512MB, so migrations run on boot rather than in a
-    # separate (paid) pre-deploy step.
-    dockerCommand: sh -c "./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/main.js"
+    # No dockerCommand on purpose. Render splits it on whitespace without
+    # honouring quotes, so an inline `sh -c "migrate && start"` arrives as a
+    # broken argv and the container exits 127. The image's own entrypoint
+    # (apps/api/docker-entrypoint.sh) runs migrations then starts the API.
     envVars:
       - key: NODE_ENV
         value: production
