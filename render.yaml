@@ -25,8 +25,17 @@ services:
     # broken argv and the container exits 127. The image's own entrypoint
     # (apps/api/docker-entrypoint.sh) runs migrations then starts the API.
     envVars:
+      # `staging`, not `production`, and deliberately so: the API keys every
+      # third-party integration off `NODE_ENV !== 'production'`. Under staging,
+      # S3, Ejari, notifications and AI fall back to mocks instead of failing
+      # against credentials this deployment does not have, and OTP login
+      # accepts OTP_DEV_BYPASS.
+      #
+      # SECURITY: that bypass means anyone who knows this URL can sign in with
+      # any phone number. Keep real data out, and move to `production` with
+      # real Twilio credentials before this is anything but a test box.
       - key: NODE_ENV
-        value: production
+        value: staging
       - key: API_PREFIX
         value: api/v1
       # Joi marks this required once NODE_ENV is production, but it also allows
