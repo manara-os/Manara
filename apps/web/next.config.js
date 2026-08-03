@@ -1,7 +1,7 @@
-// Deployed backend (Railway) and frontend (Vercel). Setting NEXT_PUBLIC_API_URL /
+// Deployed backend (Render) and frontend (Vercel). Setting NEXT_PUBLIC_API_URL /
 // NEXT_PUBLIC_APP_URL in the environment still wins; these are only the fallbacks
 // so a production build works without any dashboard configuration.
-const PROD_API_URL = 'https://api-production-24b5.up.railway.app/api/v1';
+const PROD_API_URL = 'https://manara-api-85tw.onrender.com/api/v1';
 const PROD_APP_URL = 'https://manara-os.vercel.app';
 
 const isProd = process.env.NODE_ENV === 'production';
