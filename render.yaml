@@ -1,0 +1,55 @@
+# Render Blueprint — free-tier deployment of the Manara OS API.
+#
+# Postgres and Redis are NOT declared here on purpose: Render's own free
+# Postgres expires after 30 days and it has no free Redis. Point DATABASE_URL
+# at a Neon free project and REDIS_URL at an Upstash free database instead —
+# both survive indefinitely and swap out for paid instances later without a
+# code change.
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> pick this repo.
+
+services:
+  - type: web
+    name: manara-api
+    runtime: docker
+    plan: free
+    # Matches the Neon project's region (AWS us-east-2). Cross-region adds a
+    # round trip to every query, and this app is query-heavy.
+    region: ohio
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    # Free instances get 512MB, so migrations run on boot rather than in a
+    # separate (paid) pre-deploy step.
+    dockerCommand: sh -c "./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/main.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PREFIX
+        value: api/v1
+      # Joi marks this required once NODE_ENV is production, but it also allows
+      # an empty string — so this satisfies boot validation while leaving
+      # WhatsApp/SMS disabled. Replace with the real SID to switch them on.
+      - key: TWILIO_ACCOUNT_SID
+        value: ""
+      # AiRentCallService builds an OpenAI client in its constructor, and the
+      # SDK throws on a missing/empty key — so the app cannot boot without
+      # something here. A placeholder keeps startup working; AI calls fail at
+      # request time until a real key replaces it.
+      - key: OPENAI_API_KEY
+        value: sk-placeholder-ai-disabled
+      # ── Secrets: set these in the Render dashboard, not here ──
+      - key: DATABASE_URL
+        sync: false # Neon pooled connection string
+      - key: REDIS_URL
+        sync: false # Upstash rediss:// URL
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PLATFORM_ADMIN_SECRET
+        generateValue: true
+      # Must list the Vercel origin or the browser gets a CORS failure.
+      - key: CORS_ORIGINS
+        sync: false

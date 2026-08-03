@@ -5,6 +5,9 @@ WORKDIR /app
 
 # ---- deps stage ----
 FROM base AS deps
+# `puppeteer` is declared but never imported by the API, and its postinstall
+# pulls a ~150MB Chromium that does not run on alpine anyway.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
@@ -37,6 +40,11 @@ COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/packages/database/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
+
+# Winston adds file transports when NODE_ENV=production and creates `logs/`
+# relative to the working directory — which the non-root user cannot write to
+# unless the directory already exists and belongs to it.
+RUN mkdir -p /app/logs && chown nestjs:nodejs /app/logs
 
 USER nestjs
 EXPOSE 3001
