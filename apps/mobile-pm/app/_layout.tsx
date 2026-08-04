@@ -9,18 +9,22 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [ready, setReady] = useState(false);
+  // `undefined` means the token has not been read yet.
+  const [token, setToken] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
-    AsyncStorage.getItem('manara_access_token').then((token) => {
-      if (!token) {
-        router.replace('/auth/login');
-      }
-      setReady(true);
-    });
+    AsyncStorage.getItem('manara_access_token')
+      .then(setToken)
+      .catch(() => setToken(null));
   }, []);
 
-  if (!ready) return null;
+  // The redirect has to wait for the Stack below to mount — router.replace() is
+  // a no-op while no navigator exists, which previously left the app on a blank
+  // screen with the sign-in route never reached.
+  useEffect(() => {
+    if (token === undefined) return;
+    if (!token) router.replace('/auth/login');
+  }, [token]);
 
   return (
     <QueryClientProvider client={queryClient}>

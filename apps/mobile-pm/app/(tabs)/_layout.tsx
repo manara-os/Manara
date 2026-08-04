@@ -21,7 +21,6 @@ export default function TabLayout() {
       <Tabs.Screen name="properties" options={{ title: 'Properties', tabBarIcon: tabIcon('🏢') }} />
       <Tabs.Screen name="tickets" options={{ title: 'Tickets', tabBarIcon: tabIcon('🔧') }} />
       <Tabs.Screen name="leases" options={{ title: 'Leases', tabBarIcon: tabIcon('📄') }} />
-      <Tabs.Screen name="alerts" options={{ tabBarIcon: tabIcon('🔔'), href: null }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon('👤') }} />
     </Tabs>
   );
