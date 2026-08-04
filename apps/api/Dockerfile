@@ -17,6 +17,11 @@ RUN npm ci --workspace=apps/api --workspace=packages/shared --workspace=packages
 # ---- builder stage ----
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
+# npm hoists most workspace dependencies to the root, but not all of them — a
+# version conflict leaves a package nested under the workspace instead, and
+# which packages those are changes whenever the lockfile is regenerated. The
+# per-workspace tree therefore has to be carried across explicitly.
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 # The API imports `@prisma/client` types directly, so the client must be
 # generated BEFORE nest build or the compiler sees the ungenerated stub.
@@ -34,12 +39,17 @@ ENV PORT=3001
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
-# npm workspaces hoist dependencies (and the generated .prisma client) to the ROOT
-# node_modules, so that is the tree the runtime needs.
+# The workspace layout is preserved rather than flattened. Node resolves modules
+# by walking up from the entry file, so keeping `apps/api/` nested lets it find
+# the workspace's own dependencies (date-fns and date-fns-tz nest rather than
+# hoist) before falling back to the root tree — which holds the bulk of them,
+# including the generated .prisma client. Flattening silently drops whichever
+# packages npm happened to nest that day.
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder --chown=nestjs:nodejs /app/packages/database/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
 
 # Winston adds file transports when NODE_ENV=production and creates `logs/`
 # relative to the working directory — which the non-root user cannot write to

@@ -9,7 +9,7 @@
     "build": "eas build --platform all"
   },
   "dependencies": {
-    "expo": "~54.0.0",
+    "expo": "~52.0.0",
     "expo-router": "~4.0.0",
     "expo-notifications": "~0.29.0",
     "expo-device": "~7.0.1",

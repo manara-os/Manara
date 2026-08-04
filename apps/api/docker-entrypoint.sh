@@ -8,4 +8,6 @@ set -e
 
 ./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma
 
-exec node dist/main.js
+# Run from the workspace path so Node can resolve apps/api/node_modules before
+# the root tree — see the layout note in the Dockerfile.
+exec node apps/api/dist/main.js

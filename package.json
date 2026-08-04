@@ -3,8 +3,10 @@
   "version": "3.0.0",
   "private": true,
   "description": "Manara OS — UAE Property Management Operating System",
+  "//workspaces": "The Expo apps are deliberately NOT workspaces. React Native tooling resolves Metro through the hoisted tree, and expo-camera / expo-image-picker / @react-native-firebase all declare `expo` as a `*` peer — which npm satisfies by hoisting the newest Expo release, next to the SDK the apps actually target. The resulting two-Metro tree breaks bundling. Each app under apps/mobile-* installs on its own instead.",
   "workspaces": [
-    "apps/*",
+    "apps/api",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
