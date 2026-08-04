@@ -6,18 +6,28 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "manarapm",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F766E"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "ae.manaraos.pm"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F766E"
+      },
       "package": "ae.manaraos.pm"
     },
     "plugins": [
       "expo-router"
     ],
     "extra": {
-      "apiUrl": "http://192.168.1.9:3001/api/v1",
+      "apiUrl": "https://manara-api-85tw.onrender.com/api/v1",
       "appVariant": "pm-staff"
     },
     "newArchEnabled": true
