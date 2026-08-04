@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FlatList, View, Text, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useState, useCallback, useMemo } from 'react';
 import { pmApi } from '../../lib/api';
+import { formatDayMonth } from '../../lib/format';
 
 interface Ticket {
   id: string;
@@ -89,7 +90,7 @@ function TicketCard({ t, onAdvance }: { t: Ticket; onAdvance: (id: string, next:
             <Text style={{ fontSize: 10, color: priorityColor, fontWeight: '700' }}>{t.priority}</Text>
           </View>
           <Text style={{ fontSize: 10, color: '#9ca3af', alignSelf: 'center' }}>
-            {new Date(t.createdAt).toLocaleDateString('en-AE', { day: 'numeric', month: 'short' })}
+            {formatDayMonth(t.createdAt)}
           </Text>
         </View>
         {nextStatus && nextLabel && (

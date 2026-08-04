@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FlatList, View, Text, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useState, useCallback, useMemo } from 'react';
 import { pmApi } from '../../lib/api';
+import { formatDate, formatNumber } from '../../lib/format';
 
 interface Lease {
   id: string;
@@ -69,13 +70,13 @@ function LeaseCard({ l, onAdvance }: { l: Lease; onAdvance: (id: string, next: '
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 10, color: '#9ca3af' }}>Annual rent</Text>
           <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827' }}>
-            AED {(l.annualRent ?? 0).toLocaleString()}
+            AED {formatNumber(l.annualRent)}
           </Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 10, color: '#9ca3af' }}>End date</Text>
           <Text style={{ fontSize: 13, fontWeight: '600', color: expiringSoon ? '#ef4444' : '#374151' }}>
-            {l.endDate ? new Date(l.endDate).toLocaleDateString('en-AE', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+            {formatDate(l.endDate)}
           </Text>
           {expiringSoon && (
             <Text style={{ fontSize: 10, color: '#ef4444', fontWeight: '700' }}>{daysToEnd}d left</Text>

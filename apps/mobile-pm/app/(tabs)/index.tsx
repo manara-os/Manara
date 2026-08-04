@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ScrollView, View, Text, RefreshControl, ActivityIndicator } from 'react-native';
 import { useState, useCallback } from 'react';
 import { pmApi } from '../../lib/api';
+import { formatLongDate } from '../../lib/format';
 
 interface KpiCardProps {
   label: string;
@@ -88,7 +89,7 @@ export default function DashboardScreen() {
           {profile?.fullName ?? 'Property Manager'}
         </Text>
         <Text style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
-          {new Date().toLocaleDateString('en-AE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          {formatLongDate(new Date())}
         </Text>
       </View>
 
