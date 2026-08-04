@@ -29,9 +29,19 @@ apiClient.interceptors.response.use(
   },
 );
 
-// Helper to safely unwrap API envelopes — backend wraps responses as { success, data }
+// Helper to safely unwrap API envelopes — backend wraps responses as { success, data }.
+// Paginated collections are wrapped twice: { success, data: { data: [...], meta } },
+// and only some endpoints paginate — /tickets returns a bare array while /leases
+// and /properties do not. Unwrapping one level therefore hands screens an object
+// where they expect an array, and `.filter` / `.length` silently fall over.
 const unwrap = <T>(p: Promise<any>): Promise<T> =>
-  p.then((r) => (r && typeof r === 'object' && 'data' in r ? r.data : r));
+  p.then((r) => {
+    const body = r && typeof r === 'object' && 'data' in r ? r.data : r;
+    if (body && typeof body === 'object' && !Array.isArray(body) && Array.isArray(body.data)) {
+      return body.data;
+    }
+    return body;
+  });
 
 export const authApi = {
   sendOtp: (phone: string) => apiClient.post('/auth/send-otp', { phone }),
@@ -80,7 +90,9 @@ export const pmApi = {
   getVendors: () => unwrap<any[]>(apiClient.get('/vendors')),
 
   // Me
-  getProfile: () => unwrap<any>(apiClient.get('/users/me')),
+  // /users/me does not exist — the API exposes the current user under /auth/me,
+  // which is what the owner and tenant apps already call.
+  getProfile: () => unwrap<any>(apiClient.get('/auth/me')),
 
   // ── Production-push endpoints ─────────────────────────────────────
   // Compliance

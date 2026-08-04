@@ -35,10 +35,15 @@ export default function LoginScreen() {
       const res: any = await authApi.verifyOtp(full, otp);
       const data = res?.data ?? res;
       if (data?.accessToken) {
+        // The API returns the memberships as `workspaces`, not a bare
+        // `workspaceId`. Reading the wrong field stored an empty string, the
+        // X-Workspace-ID header was then never sent, and every workspace-scoped
+        // list came back empty while the app looked perfectly healthy.
+        const workspaceId = data.workspaces?.[0]?.workspaceId ?? '';
         await AsyncStorage.multiSet([
           ['manara_access_token', data.accessToken],
           ['manara_refresh_token', data.refreshToken ?? ''],
-          ['manara_workspace_id', data.workspaceId ?? ''],
+          ['manara_workspace_id', workspaceId],
         ]);
         router.replace('/(tabs)');
       } else {
