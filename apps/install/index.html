@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Manara PM</title>
+<meta name="description" content="Download and install the Manara PM Android app for testing.">
+<meta name="theme-color" content="#0F766E">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #f6f7f9;  --card: #ffffff;   --ink: #10151c;   --muted: #5f6b78;
+    --line: #e3e8ee; --brand: #0F766E; --brand-ink: #ffffff; --accent: #C2571A;
+    --warn-bg: #fff8ed; --warn-line: #f3d9b4; --warn-ink: #7c4a11;
+    --code-bg: #f0f3f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --card: #161b22; --ink: #e7edf4; --muted: #9aa7b4;
+      --line: #262e38; --brand: #14b8a6; --brand-ink: #06231f; --accent: #f0913f;
+      --warn-bg: #241a0d; --warn-line: #4a3213; --warn-ink: #f0c489;
+      --code-bg: #1d232c;
+    }
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 24px 16px 56px;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  .mark {
+    width: 68px; height: 68px; border-radius: 17px; background: var(--brand);
+    display: grid; place-items: center; margin: 0 auto 14px;
+  }
+  .mark svg { width: 34px; height: 34px; }
+  h1 { font-size: 27px; line-height: 1.25; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 15px; margin: 0; }
+  .pill {
+    display: inline-block; margin-top: 12px; padding: 4px 11px; border-radius: 999px;
+    background: var(--code-bg); color: var(--muted); font-size: 12.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px; margin-bottom: 16px;
+  }
+
+  .cta {
+    display: block; text-align: center; background: var(--brand); color: var(--brand-ink);
+    font-size: 17px; font-weight: 650; text-decoration: none;
+    padding: 17px 20px; border-radius: 13px;
+  }
+  .cta:active { opacity: .85; }
+  .cta-note { text-align: center; color: var(--muted); font-size: 13.5px; margin: 12px 0 0; }
+
+  .qr { text-align: center; padding-top: 4px; }
+  .qr img {
+    width: 186px; height: 186px; max-width: 100%; border-radius: 10px;
+    background: #fff; padding: 9px; border: 1px solid var(--line);
+  }
+  .qr p { color: var(--muted); font-size: 13.5px; margin: 12px 0 0; }
+
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .075em;
+       color: var(--accent); margin: 0 0 16px; font-weight: 700; }
+
+  ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  ol.steps li { position: relative; padding: 0 0 20px 46px; counter-increment: s; }
+  ol.steps li:last-child { padding-bottom: 0; }
+  ol.steps li::before {
+    content: counter(s); position: absolute; left: 0; top: -1px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--brand); color: var(--brand-ink);
+    display: grid; place-items: center; font-size: 14px; font-weight: 700;
+  }
+  ol.steps li::after {
+    content: ""; position: absolute; left: 14.5px; top: 32px; bottom: 6px; width: 1px;
+    background: var(--line);
+  }
+  ol.steps li:last-child::after { display: none; }
+  .st { font-weight: 620; display: block; margin-bottom: 2px; }
+  .sd { color: var(--muted); font-size: 14.5px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  td { padding: 11px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.k { color: var(--muted); width: 42%; }
+  td.v { text-align: right; font-weight: 650; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--code-bg); padding: 2px 7px; border-radius: 6px; font-size: 14.5px;
+  }
+
+  .note {
+    background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink);
+    border-radius: 13px; padding: 15px 17px; font-size: 14.5px; margin-bottom: 16px;
+  }
+  .note strong { font-weight: 680; }
+  .note p { margin: 0; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 28px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 100 100" fill="#fff"><circle cx="50" cy="26" r="15"/><rect x="46.5" y="4" width="7" height="10"/><path d="M38 38 h24 l3 52 h-30 z"/><rect x="30" y="56" width="40" height="6"/><rect x="46" y="40" width="8" height="14" fill="#0F766E"/></svg>
+    </div>
+    <h1>Install Manara&nbsp;PM</h1>
+    <p class="sub">Property manager app for Android &mdash; test build</p>
+    <span class="pill">v1.0.2 &middot; Android only</span>
+  </header>
+
+  <div class="card">
+    <a class="cta" href="https://expo.dev/accounts/mukulciscx/projects/property-/builds/38cd16f4-78eb-4661-b663-bab353612359">Open download page</a>
+    <p class="cta-note">Tap this on the phone you want to install on.</p>
+  </div>
+
+  <div class="card qr">
+    <img src="data:image/png;base64,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" alt="QR code linking to the download page">
+    <p>On a computer? Scan this with your phone&rsquo;s camera.</p>
+  </div>
+
+  <div class="card">
+    <h2>How to install</h2>
+    <ol class="steps">
+      <li><span class="st">Open the download page on your phone</span>
+          <span class="sd">Tap the button above, or scan the QR code with your camera app.</span></li>
+      <li><span class="st">Tap &ldquo;Install&rdquo;</span>
+          <span class="sd">The APK file starts downloading. It is about 60&nbsp;MB.</span></li>
+      <li><span class="st">Open the downloaded file</span>
+          <span class="sd">Check the notification bar, or find it in your Downloads folder.</span></li>
+      <li><span class="st">Allow installation from this source</span>
+          <span class="sd">Android blocks apps from outside the Play Store by default. When it asks, turn the permission on and go back &mdash; this is expected for a test build.</span></li>
+      <li><span class="st">Sign in</span>
+          <span class="sd">Use the test account below. The app opens straight to the sign-in screen.</span></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Test sign-in</h2>
+    <table>
+      <tr><td class="k">Mobile number</td><td class="v"><code>501000002</code></td></tr>
+      <tr><td class="k">OTP</td><td class="v"><code>123456</code></td></tr>
+      <tr><td class="k">Signs in as</td><td class="v">Ruqaiya Al&nbsp;Rashidi</td></tr>
+      <tr><td class="k">Role</td><td class="v">PM Admin</td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><strong>The first screen may take up to a minute.</strong> The test server sleeps when nobody is using it and needs about 50&nbsp;seconds to wake up. Pull down to refresh once it does &mdash; every screen after that loads normally.</p>
+  </div>
+
+  <div class="note">
+    <p><strong>Reinstalling?</strong> Remove the old Manara&nbsp;PM first, then install the new file. Android will not replace it otherwise.</p>
+  </div>
+
+  <div class="card">
+    <h2>What you can try</h2>
+    <table>
+      <tr><td class="k">Dashboard</td><td class="v">Open tickets, move-ins, expiring leases</td></tr>
+      <tr><td class="k">Properties</td><td class="v">4 buildings, units and occupancy</td></tr>
+      <tr><td class="k">Tickets</td><td class="v">5 maintenance jobs, assign and update</td></tr>
+      <tr><td class="k">Leases</td><td class="v">7 leases, advance a move-in</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    Manara OS &middot; test environment<br>
+    Sample data only &mdash; please do not enter real tenant or payment details.
+  </footer>
+
+</div>
+</body>
+</html>
