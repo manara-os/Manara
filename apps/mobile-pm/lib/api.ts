@@ -6,7 +6,10 @@ const API_URL = Constants.expoConfig?.extra?.apiUrl ?? 'http://localhost:3001/ap
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  // The API sleeps when idle and takes roughly a minute to come back. A 30s
+  // timeout guaranteed that the first request after a quiet spell was killed
+  // before the server had finished waking.
+  timeout: 90000,
   headers: { 'Content-Type': 'application/json' },
 });
 

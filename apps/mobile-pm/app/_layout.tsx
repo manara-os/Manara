@@ -5,7 +5,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      // Waking the API can outlast a single attempt, so back off and try again
+      // rather than leaving the screen with nothing to render.
+      retry: 3,
+      retryDelay: (attempt: number) => Math.min(2_000 * 2 ** attempt, 15_000),
+    },
+  },
 });
 
 export default function RootLayout() {

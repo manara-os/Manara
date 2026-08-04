@@ -111,7 +111,7 @@ export default function TicketsScreen() {
   const [filter, setFilter] = useState<string>('all');
   const qc = useQueryClient();
 
-  const { data, refetch, isLoading } = useQuery<Ticket[]>({
+  const { data, refetch, isLoading, isError } = useQuery<Ticket[]>({
     queryKey: ['pm-tickets'],
     queryFn: () => pmApi.getTickets(),
   });
@@ -176,12 +176,20 @@ export default function TicketsScreen() {
         keyExtractor={(t) => t.id}
         renderItem={({ item }) => <TicketCard t={item} onAdvance={handleAdvance} />}
         ListEmptyComponent={
-          <View style={{ padding: 40, alignItems: 'center' }}>
-            <Text style={{ fontSize: 32 }}>✨</Text>
-            <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 8 }}>No tickets in this view</Text>
-          </View>
-        }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            isError ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Text style={{ fontSize: 32 }}>📡</Text>
+                <Text style={{ fontSize: 14, color: '#9f1239', marginTop: 8, fontWeight: '600' }}>Couldn&apos;t reach the server</Text>
+                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Pull down to try again.</Text>
+              </View>
+            ) : (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Text style={{ fontSize: 32 }}>✨</Text>
+                <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 8 }}>No tickets in this view</Text>
+              </View>
+            )
+          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 4 }}
       />
     </View>

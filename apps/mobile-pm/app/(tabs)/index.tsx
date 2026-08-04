@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ScrollView, View, Text, RefreshControl, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useState, useCallback } from 'react';
 import { pmApi } from '../../lib/api';
 import { formatLongDate } from '../../lib/format';
@@ -50,14 +50,16 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: tickets, refetch: rt } = useQuery<any[]>({
+  const { data: tickets, refetch: rt, isPending: tPending, isError: tError } = useQuery<any[]>({
     queryKey: ['pm-dashboard-tickets'],
     queryFn: () => pmApi.getTickets(),
   });
-  const { data: leases, refetch: rl } = useQuery<any[]>({
+  const { data: leases, refetch: rl, isPending: lPending, isError: lError } = useQuery<any[]>({
     queryKey: ['pm-dashboard-leases'],
     queryFn: () => pmApi.getLeases(),
   });
+  const loading = tPending || lPending;
+  const failed = (tError || lError) && !loading;
   const { data: profile } = useQuery({
     queryKey: ['pm-profile'],
     queryFn: () => pmApi.getProfile().catch(() => null),
@@ -141,10 +143,26 @@ export default function DashboardScreen() {
         </View>
       )}
 
-      {!tickets && !leases && (
+      {loading && (
         <View style={{ padding: 32, alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#D97706" />
           <Text style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>Loading…</Text>
+        </View>
+      )}
+
+      {failed && (
+        <View style={{ marginHorizontal: 16, marginTop: 4, padding: 18, backgroundColor: '#fff1f2', borderRadius: 12, alignItems: 'center' }}>
+          <Text style={{ fontSize: 28, marginBottom: 6 }}>📡</Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: '#9f1239' }}>Couldn&apos;t reach the server</Text>
+          <Text style={{ fontSize: 12, color: '#be123c', marginTop: 4, textAlign: 'center' }}>
+            Check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            style={{ marginTop: 12, backgroundColor: '#9f1239', paddingVertical: 9, paddingHorizontal: 22, borderRadius: 9 }}
+          >
+            <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '600' }}>Retry</Text>
+          </TouchableOpacity>
         </View>
       )}
 
