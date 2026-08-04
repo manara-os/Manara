@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Manara PM",
-    "slug": "manara-pm",
+    "slug": "property-",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -28,8 +28,15 @@
     ],
     "extra": {
       "apiUrl": "https://manara-api-85tw.onrender.com/api/v1",
-      "appVariant": "pm-staff"
+      "appVariant": "pm-staff",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6565ecf1-ed8b-48d5-bc91-1fe19d8195ce"
+      }
     },
-    "newArchEnabled": true
+    "newArchEnabled": false,
+    "owner": "mukulciscx"
   }
 }
