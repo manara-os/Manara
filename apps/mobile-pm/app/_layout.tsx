@@ -39,6 +39,8 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth/login" options={{ presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="overdue" options={{ headerShown: true, title: 'Overdue rent' }} />
+        <Stack.Screen name="tenants" options={{ headerShown: true, title: 'Tenants' }} />
       </Stack>
     </QueryClientProvider>
   );

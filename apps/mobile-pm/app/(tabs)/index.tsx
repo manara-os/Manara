@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ScrollView, View, Text, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useState, useCallback } from 'react';
+import { router } from 'expo-router';
 import { pmApi } from '../../lib/api';
 import { formatLongDate } from '../../lib/format';
 
@@ -102,6 +103,34 @@ export default function DashboardScreen() {
         <KpiCard label="In progress" value={inProgress} icon="🔧" tone="neutral" />
         <KpiCard label="Pending move-ins" value={pendingMoveIns} icon="📦" tone={pendingMoveIns > 0 ? 'warn' : 'neutral'} />
         <KpiCard label="Leases expiring (90d)" value={expiring} icon="📅" tone={expiring > 0 ? 'warn' : 'good'} />
+      </View>
+
+      <SectionHeader title="Quick actions" />
+
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16 }}>
+        <TouchableOpacity
+          onPress={() => router.push('/overdue')}
+          style={{
+            flex: 1, backgroundColor: '#ffffff', borderRadius: 12, padding: 14, marginRight: 8,
+            borderWidth: 1, borderColor: '#f1f5f9',
+          }}
+        >
+          <Text style={{ fontSize: 22 }}>💰</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827', marginTop: 6 }}>Overdue rent</Text>
+          <Text style={{ fontSize: 11.5, color: '#6b7280', marginTop: 1 }}>Chase late cheques</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => router.push('/tenants')}
+          style={{
+            flex: 1, backgroundColor: '#ffffff', borderRadius: 12, padding: 14,
+            borderWidth: 1, borderColor: '#f1f5f9',
+          }}
+        >
+          <Text style={{ fontSize: 22 }}>👥</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#111827', marginTop: 6 }}>Tenants</Text>
+          <Text style={{ fontSize: 11.5, color: '#6b7280', marginTop: 1 }}>Search and call</Text>
+        </TouchableOpacity>
       </View>
 
       <SectionHeader title="Action Required" />
