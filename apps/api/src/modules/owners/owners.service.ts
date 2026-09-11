@@ -32,8 +32,12 @@ export class OwnersService {
   }
 
   async findMe(workspaceId: string, userId: string) {
+    // Owner has a scalar `userId` FK, not a `user` relation, so this has to
+    // filter on the column directly rather than through a nested relation
+    // filter (`user: { id: userId }`, which Prisma rejects outright since no
+    // such relation exists on the model).
     const owner = await this.prisma.owner.findFirst({
-      where: { workspaceId, user: { id: userId } },
+      where: { workspaceId, userId },
       select: {
         id: true, fullName: true, email: true, phone: true,
         pmaStatus: true, pmaRenewalAlertSentAt: true,
@@ -42,6 +46,13 @@ export class OwnersService {
     });
     if (!owner) throw new NotFoundException('Owner profile not found');
     return owner;
+  }
+
+  /** Resolves the caller's own Owner record before delegating to getPortfolio. */
+  async getMyPortfolio(workspaceId: string, userId: string) {
+    const owner = await this.prisma.owner.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!owner) throw new NotFoundException('Owner profile not found');
+    return this.getPortfolio(workspaceId, owner.id);
   }
 
   async findOne(workspaceId: string, id: string) {

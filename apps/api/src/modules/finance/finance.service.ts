@@ -163,6 +163,13 @@ export class FinanceService {
 
   // ── Owner SOA ─────────────────────────────────────────────────────
 
+  /** Owner has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async resolveOwnerIdForUser(workspaceId: string, userId: string) {
+    const owner = await this.prisma.owner.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!owner) throw new NotFoundException('Owner profile not found');
+    return owner;
+  }
+
   async getOwnerSoa(workspaceId: string, ownerId: string, period: string) {
     const [year, month] = period.split('-').map(Number);
     const startDate = new Date(year, month - 1, 1);

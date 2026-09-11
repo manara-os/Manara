@@ -30,6 +30,15 @@ export class OwnersController {
     return this.ownersService.findMe(req.workspaceId, req.user.id);
   }
 
+  // Declared ahead of ':id/portfolio' — Nest matches routes in declaration
+  // order, and a dynamic ':id' segment would otherwise swallow 'me' as if it
+  // were an owner ID before this handler ever got a chance to run.
+  @Get('me/portfolio')
+  @ApiOperation({ summary: "Get the current owner's own property portfolio with stats" })
+  getMyPortfolio(@Request() req: any) {
+    return this.ownersService.getMyPortfolio(req.workspaceId, req.user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get owner profile' })
   findOne(@Request() req: any, @Param('id') id: string) {

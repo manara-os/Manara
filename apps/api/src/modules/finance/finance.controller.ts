@@ -7,6 +7,14 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { UserRole, ChequeStatus } from '@prisma/client';
 
+// getMonth() is 0-indexed, so the naive `${year}-${month}` this replaces
+// produced "2026-8" for September instead of "2026-09" — a period string
+// getOwnerSoa then can't match against any real SOA row.
+function defaultSoaPeriod(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
 @ApiTags('Finance')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, WorkspaceGuard, RolesGuard)
@@ -81,6 +89,17 @@ export class FinanceController {
     return this.financeService.createExpense(req.workspaceId, dto);
   }
 
+  // Declared ahead of 'owner-soa/:ownerId' so 'me' is matched here rather
+  // than captured as the dynamic :ownerId segment (Nest matches in
+  // declaration order).
+  @Get('owner-soa/me')
+  @ApiOperation({ summary: "Get the current owner's own statement of account for a period (YYYY-MM)" })
+  @Roles(UserRole.OWNER)
+  async getMyOwnerSoa(@Request() req: any, @Query('period') period: string) {
+    const owner = await this.financeService.resolveOwnerIdForUser(req.workspaceId, req.user.id);
+    return this.financeService.getOwnerSoa(req.workspaceId, owner.id, period ?? defaultSoaPeriod());
+  }
+
   @Get('owner-soa/:ownerId')
   @ApiOperation({ summary: 'Get owner statement of account for a period (YYYY-MM)' })
   @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.OWNER)
@@ -89,7 +108,7 @@ export class FinanceController {
     @Param('ownerId') ownerId: string,
     @Query('period') period: string,
   ) {
-    return this.financeService.getOwnerSoa(req.workspaceId, ownerId, period ?? `${new Date().getFullYear()}-${new Date().getMonth() + 1}`);
+    return this.financeService.getOwnerSoa(req.workspaceId, ownerId, period ?? defaultSoaPeriod());
   }
 
   @Get('commissions')
