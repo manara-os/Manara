@@ -11,6 +11,17 @@ export class TicketsService {
     @InjectQueue('notifications') private notificationsQueue: Queue,
   ) {}
 
+  /**
+   * Resolves the caller's own Vendor row server-side rather than trusting a
+   * client-supplied vendor id, so a vendor account can never see another
+   * vendor's assigned tickets by passing a different id.
+   */
+  async resolveVendorIdForUser(workspaceId: string, userId: string) {
+    const vendor = await this.prisma.vendor.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!vendor) throw new NotFoundException('Vendor profile not found');
+    return vendor;
+  }
+
   private async generateRef(workspaceId: string): Promise<string> {
     const count = await this.prisma.ticket.count({ where: { workspaceId } });
     const year = new Date().getFullYear();

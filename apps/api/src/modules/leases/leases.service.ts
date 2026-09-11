@@ -26,6 +26,13 @@ export class LeasesService {
     @InjectQueue('notifications') private notificationsQueue: Queue,
   ) {}
 
+  /** Tenant has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async resolveTenantIdForUser(workspaceId: string, userId: string) {
+    const tenant = await this.prisma.tenant.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!tenant) throw new NotFoundException('Tenant profile not found');
+    return tenant;
+  }
+
   async findAll(workspaceId: string, query: LeaseQueryDto) {
     const { page = 1, limit = 20, status, tenantId, unitId, search } = query;
     const skip = (page - 1) * limit;

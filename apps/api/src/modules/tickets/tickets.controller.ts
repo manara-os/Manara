@@ -19,7 +19,8 @@ export class TicketsController {
   @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
   @ApiQuery({ name: 'category', required: false, enum: TicketCategory })
   @ApiQuery({ name: 'priority', required: false, enum: TicketPriority })
-  findAll(
+  @ApiQuery({ name: 'assignedToMe', required: false, description: 'Scope to the calling vendor\'s own tickets' })
+  async findAll(
     @Request() req: any,
     @Query('status') status?: string,
     @Query('category') category?: TicketCategory,
@@ -28,9 +29,19 @@ export class TicketsController {
     @Query('propertyId') propertyId?: string,
     @Query('search') search?: string,
     @Query('limit') limit?: string,
+    @Query('assignedToMe') assignedToMe?: string,
   ) {
+    // `assignedToMe` was previously accepted and silently ignored — every
+    // vendor calling it got every ticket in the workspace, not just their
+    // own. Resolving the vendor id from the JWT (rather than trusting one
+    // supplied by the client) is what makes this safe to scope by.
+    let assignedVendorId: string | undefined;
+    if (assignedToMe === 'true') {
+      const vendor = await this.ticketsService.resolveVendorIdForUser(req.workspaceId, req.user.id);
+      assignedVendorId = vendor.id;
+    }
     return this.ticketsService.findAll(req.workspaceId, {
-      status, category, priority, unitId, propertyId, search,
+      status, category, priority, unitId, propertyId, search, assignedVendorId,
       limit: limit ? parseInt(limit) : undefined,
     });
   }

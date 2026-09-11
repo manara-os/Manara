@@ -18,13 +18,21 @@ export class LeasesController {
   @ApiOperation({ summary: 'List all leases' })
   @ApiQuery({ name: 'status', required: false, enum: LeaseStatus })
   @ApiQuery({ name: 'unitId', required: false })
-  @ApiQuery({ name: 'tenantId', required: false })
-  findAll(
+  @ApiQuery({ name: 'tenantId', required: false, description: 'Ignored for TENANT callers — forced to their own record' })
+  async findAll(
     @Request() req: any,
     @Query('status') status?: LeaseStatus,
     @Query('unitId') unitId?: string,
     @Query('tenantId') tenantId?: string,
   ) {
+    // A tenant could otherwise pass any other tenant's ID here and read their
+    // rent, dates and unit — this endpoint carries no role check at all, so
+    // nothing else stops that. Resolve and force their own id server-side
+    // instead of trusting whatever the client sent.
+    if (req.user.role === 'TENANT') {
+      const tenant = await this.leasesService.resolveTenantIdForUser(req.workspaceId, req.user.id);
+      tenantId = tenant.id;
+    }
     return this.leasesService.findAll(req.workspaceId, { status, unitId, tenantId });
   }
 
