@@ -22,6 +22,13 @@ export class TicketsService {
     return vendor;
   }
 
+  /** Same reasoning as resolveVendorIdForUser, for tenants scoping their own maintenance tickets. */
+  async resolveTenantIdForUser(workspaceId: string, userId: string) {
+    const tenant = await this.prisma.tenant.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!tenant) throw new NotFoundException('Tenant profile not found');
+    return tenant;
+  }
+
   private async generateRef(workspaceId: string): Promise<string> {
     const count = await this.prisma.ticket.count({ where: { workspaceId } });
     const year = new Date().getFullYear();
@@ -35,6 +42,7 @@ export class TicketsService {
     unitId?: string;
     propertyId?: string;
     assignedVendorId?: string;
+    raisedByTenantId?: string;
     search?: string;
     limit?: number;
   }) {
@@ -51,6 +59,7 @@ export class TicketsService {
         ...(filters?.unitId && { unitId: filters.unitId }),
         ...(filters?.propertyId && { unit: { propertyId: filters.propertyId } }),
         ...(filters?.assignedVendorId && { assignedVendorId: filters.assignedVendorId }),
+        ...(filters?.raisedByTenantId && { raisedByTenantId: filters.raisedByTenantId }),
         ...(filters?.search && {
           OR: [
             { title: { contains: filters.search, mode: 'insensitive' } },

@@ -40,8 +40,16 @@ export class TicketsController {
       const vendor = await this.ticketsService.resolveVendorIdForUser(req.workspaceId, req.user.id);
       assignedVendorId = vendor.id;
     }
+    // This endpoint has no @Roles restriction, so a TENANT can reach it too
+    // — unscoped, that returned every maintenance ticket in the workspace
+    // (other tenants' unit issues included), not just their own.
+    let raisedByTenantId: string | undefined;
+    if (req.user.role === 'TENANT') {
+      const tenant = await this.ticketsService.resolveTenantIdForUser(req.workspaceId, req.user.id);
+      raisedByTenantId = tenant.id;
+    }
     return this.ticketsService.findAll(req.workspaceId, {
-      status, category, priority, unitId, propertyId, search, assignedVendorId,
+      status, category, priority, unitId, propertyId, search, assignedVendorId, raisedByTenantId,
       limit: limit ? parseInt(limit) : undefined,
     });
   }
