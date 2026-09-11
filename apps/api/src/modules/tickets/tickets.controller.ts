@@ -69,7 +69,19 @@ export class TicketsController {
   @Post()
   @ApiOperation({ summary: 'Create a new maintenance ticket' })
   @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.TENANT)
-  create(@Request() req: any, @Body() dto: any) {
+  async create(@Request() req: any, @Body() dto: any) {
+    // For a TENANT caller, always force raisedByTenantId from the JWT rather
+    // than trusting the body — otherwise a tenant could attribute a ticket
+    // to a different tenant's id. If unitId is also omitted (the tenant app
+    // only has one active unit and shouldn't need to know its id), resolve
+    // it from their own active lease.
+    if (req.user.role === 'TENANT') {
+      const tenant = await this.ticketsService.resolveTenantIdForUser(req.workspaceId, req.user.id);
+      dto = { ...dto, raisedByTenantId: tenant.id };
+      if (!dto.unitId) {
+        dto.unitId = await this.ticketsService.resolveActiveUnitIdForTenant(req.workspaceId, tenant.id);
+      }
+    }
     return this.ticketsService.create(req.workspaceId, dto);
   }
 

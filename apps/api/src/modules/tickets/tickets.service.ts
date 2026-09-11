@@ -29,6 +29,17 @@ export class TicketsService {
     return tenant;
   }
 
+  /** Lets a tenant raise a ticket without knowing their own unit's id. */
+  async resolveActiveUnitIdForTenant(workspaceId: string, tenantId: string): Promise<string> {
+    const lease = await this.prisma.lease.findFirst({
+      where: { workspaceId, tenantId, status: 'ACTIVE' },
+      select: { unitId: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!lease) throw new NotFoundException('No active lease found for this tenant');
+    return lease.unitId;
+  }
+
   private async generateRef(workspaceId: string): Promise<string> {
     const count = await this.prisma.ticket.count({ where: { workspaceId } });
     const year = new Date().getFullYear();
