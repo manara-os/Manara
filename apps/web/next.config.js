@@ -43,6 +43,20 @@ const nextConfig = {
         { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
       ],
     },
+    {
+      // Vercel's CDN otherwise caches this like any static file. A stale
+      // cached sw.js means a deploy's fixes never reach installed PWAs, so it
+      // must always be revalidated.
+      source: '/sw.js',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
+    },
+    {
+      source: '/manifest.webmanifest',
+      headers: [
+        { key: 'Content-Type', value: 'application/manifest+json' },
+        { key: 'Cache-Control', value: 'public, max-age=3600, must-revalidate' },
+      ],
+    },
   ],
 
   rewrites: async () => [

@@ -3,6 +3,7 @@ import { Inter, Noto_Kufi_Arabic } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { PwaProvider } from '@/components/providers/pwa-provider';
 import { I18nProvider } from '@/lib/i18n/i18n-provider';
 import { Toaster } from 'sonner';
 import './globals.css';
@@ -46,11 +47,30 @@ export const metadata: Metadata = {
     description: 'UAE Property Management Operating System',
   },
   robots: { index: true, follow: true },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Manara OS',
+  },
+  icons: {
+    icon: [
+      { url: '/icons/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // 'cover' lets standalone-mode content run under the notch/home-indicator
+  // safe areas; zoom is left at its default rather than locked, which would
+  // block pinch-to-zoom for anyone who needs it (WCAG 1.4.4).
+  viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#D97706' },
     { media: '(prefers-color-scheme: dark)', color: '#451A03' },
@@ -72,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <I18nProvider>
                 {children}
               </I18nProvider>
+              <PwaProvider />
               <Toaster
                 position="top-right"
                 richColors
