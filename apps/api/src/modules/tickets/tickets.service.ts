@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -161,6 +161,12 @@ export class TicketsService {
     if (note) updateData.cancellationReason = note;
 
     return this.prisma.ticket.update({ where: { id }, data: updateData });
+  }
+
+  async assertTicketAssignedToVendor(workspaceId: string, ticketId: string, vendorId: string) {
+    const ticket = await this.prisma.ticket.findFirst({ where: { id: ticketId, workspaceId }, select: { assignedVendorId: true } });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    if (ticket.assignedVendorId !== vendorId) throw new ForbiddenException('This ticket is not assigned to you');
   }
 
   async update(workspaceId: string, id: string, dto: any) {

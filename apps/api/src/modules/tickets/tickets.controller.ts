@@ -94,12 +94,21 @@ export class TicketsController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update ticket status' })
-  updateStatus(
+  @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.VENDOR)
+  async updateStatus(
     @Request() req: any,
     @Param('id') id: string,
     @Body('status') status: TicketStatus,
     @Body('note') note?: string,
   ) {
+    // This had no @Roles at all, so any authenticated role — including a
+    // vendor with no connection to this ticket — could flip any ticket's
+    // status in the workspace. Now vendors are restricted to tickets
+    // actually assigned to them; PM staff are unrestricted as before.
+    if (req.user.role === 'VENDOR') {
+      const vendor = await this.ticketsService.resolveVendorIdForUser(req.workspaceId, req.user.id);
+      await this.ticketsService.assertTicketAssignedToVendor(req.workspaceId, id, vendor.id);
+    }
     return this.ticketsService.updateStatus(req.workspaceId, id, status, note);
   }
 
