@@ -34,9 +34,12 @@ export class TicketsController {
     // `assignedToMe` was previously accepted and silently ignored — every
     // vendor calling it got every ticket in the workspace, not just their
     // own. Resolving the vendor id from the JWT (rather than trusting one
-    // supplied by the client) is what makes this safe to scope by.
+    // supplied by the client) is what makes this safe to scope by. A VENDOR
+    // caller is scoped unconditionally now, regardless of assignedToMe —
+    // this endpoint has no @Roles guard, so nothing else stopped a vendor
+    // who simply omitted the flag from getting every ticket in the workspace.
     let assignedVendorId: string | undefined;
-    if (assignedToMe === 'true') {
+    if (assignedToMe === 'true' || req.user.role === 'VENDOR') {
       const vendor = await this.ticketsService.resolveVendorIdForUser(req.workspaceId, req.user.id);
       assignedVendorId = vendor.id;
     }
