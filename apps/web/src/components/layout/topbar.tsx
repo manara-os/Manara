@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, BookOpen, Lightbulb, AlertOctagon, Crown, Shield, Menu } from 'lucide-react';
+import { Bell, BookOpen, Lightbulb, AlertOctagon, Crown, Shield } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
-import { useUIStore } from '@/store/ui.store';
 import { financeApi } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -29,7 +28,6 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function Topbar() {
   const { user, currentWorkspace } = useAuthStore();
-  const { toggleMobileSidebar } = useUIStore();
   const role = currentWorkspace?.role as string;
   const RoleIcon = ROLE_ICON[role] ?? Shield;
   const [openMenu, setOpenMenu] = useState<null | 'notif' | 'guide'>(null);
@@ -49,24 +47,8 @@ export function Topbar() {
 
   return (
     <div className="h-12 px-3 md:px-5 flex items-center justify-between gap-2 border-b border-gray-200 bg-white sticky top-0 z-30">
-      {/* Left: mobile menu + workspace/role badge */}
+      {/* Left: workspace/role badge — on mobile, PmMobileNav's bottom tabs replace the old hamburger */}
       <div className="flex items-center gap-2 min-w-0">
-        {/*
-          Open-only. This button lives in Topbar's own stacking context
-          (sticky + z-30), which the open drawer (fixed + z-50) paints over
-          entirely — a higher z-index on just this button can't escape that,
-          since a descendant is capped by its own stacking-context ancestor.
-          Closing is handled by the backdrop tap and the X inside the drawer
-          itself (Sidebar), both of which are naturally part of that z-50 layer.
-        */}
-        <button
-          onClick={toggleMobileSidebar}
-          className="md:hidden p-1.5 -ml-1 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
-          aria-label="Open menu"
-        >
-          <Menu className="w-4.5 h-4.5" />
-        </button>
-
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700 min-w-0">
           <RoleIcon className="w-3 h-3 text-amber-600 flex-shrink-0" />
           <span className="truncate max-w-[38vw] sm:max-w-none">{currentWorkspace?.workspace?.name ?? 'Manara OS'}</span>

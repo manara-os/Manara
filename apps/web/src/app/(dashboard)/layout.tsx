@@ -1,5 +1,6 @@
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
+import { PmMobileNav } from '@/components/layout/pm-mobile-nav';
 import { CookieConsent } from '@/components/legal/cookie-consent';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
+        <PmMobileNav />
       </div>
       <CookieConsent />
     </div>

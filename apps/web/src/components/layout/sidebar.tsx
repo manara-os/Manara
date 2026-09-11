@@ -16,7 +16,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  X,
   UserPlus,
   AlertOctagon,
   MessageSquare,
@@ -27,12 +26,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
-import { useUIStore } from '@/store/ui.store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserRole } from '@/types';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useT } from '@/lib/i18n/i18n-provider';
-import { useIsMobile } from '@/hooks/use-is-mobile';
 
 interface NavItem {
   label: string;
@@ -94,15 +91,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, currentWorkspace, logout } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
-  const { mobileSidebarOpen, closeMobileSidebar } = useUIStore();
   const userRole = currentWorkspace?.role as UserRole;
   const { t } = useT();
-
-  // A tapped nav link should close the drawer on mobile; on desktop this
-  // state is simply unused since the sidebar is never off-canvas there.
-  useEffect(() => {
-    closeMobileSidebar();
-  }, [pathname, closeMobileSidebar]);
 
   const translate = (label: string): string => {
     const map: Record<string, string> = {
@@ -135,34 +125,23 @@ export function Sidebar() {
     }))
     .filter((g) => g.items.length > 0);
 
-  const isMobile = useIsMobile();
-  // The desktop icon-only collapse mode has no analogue in a mobile drawer —
-  // a drawer that's open but showing icon-only nav defeats the point of it.
-  const showLabels = isMobile || !collapsed;
+  const showLabels = !collapsed;
 
   return (
     <>
-      {/* Backdrop — mobile only, closes the drawer on tap-outside */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={closeMobileSidebar}
-          aria-hidden="true"
-        />
-      )}
-
+      {/*
+        Desktop only now — PM staff's ~15 sections don't fit a bottom tab
+        bar, so mobile gets PmMobileNav (4 primary tabs + a "More" grid)
+        instead of this as an off-canvas drawer. That's the same bottom-tab
+        pattern Owner/Tenant/Vendor already use, so every role reads as a
+        native app on a phone rather than a website with a slide-out menu.
+      */}
       <aside
         style={{
           ['--sidebar-w' as string]: `${collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W}px`,
           background: 'linear-gradient(180deg, #0A1628 0%, #0D1F35 60%, #0A1628 100%)',
         }}
-        className={cn(
-          // Mobile: fixed-width off-canvas drawer, slid via transform.
-          'fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col h-screen overflow-hidden transition-transform duration-200 ease-out',
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-          // Desktop: back in normal flow, width driven by the collapse toggle.
-          'md:relative md:z-auto md:translate-x-0 md:flex-shrink-0 md:w-[var(--sidebar-w)] md:min-w-[var(--sidebar-w)] md:transition-[width]',
-        )}
+        className="hidden md:flex md:relative md:flex-shrink-0 md:w-[var(--sidebar-w)] md:min-w-[var(--sidebar-w)] md:transition-[width] flex-col h-screen overflow-hidden"
       >
       {/* Logo */}
       <div
@@ -181,18 +160,6 @@ export function Sidebar() {
               {currentWorkspace?.workspace.subscriptionPlan?.toLowerCase() || 'pro'} plan
             </span>
           </div>
-        )}
-
-        {/* Mobile close — lives inside the drawer itself (z-50), so unlike
-            Topbar's hamburger it's never covered by the drawer it controls. */}
-        {mobileSidebarOpen && (
-          <button
-            onClick={closeMobileSidebar}
-            className="md:hidden ml-auto p-1 rounded-lg text-amber-400/70 hover:text-amber-300 hover:bg-white/5 transition-colors flex-shrink-0"
-            aria-label="Close menu"
-          >
-            <X className="h-4.5 w-4.5" />
-          </button>
         )}
       </div>
 
