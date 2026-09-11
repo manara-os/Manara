@@ -16,6 +16,13 @@ export class PropertiesService {
 
   constructor(private prisma: PrismaService) {}
 
+  /** Owner has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async resolveOwnerIdForUser(workspaceId: string, userId: string) {
+    const owner = await this.prisma.owner.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!owner) throw new NotFoundException('Owner profile not found');
+    return owner;
+  }
+
   async findAll(workspaceId: string, query: PropertyQueryDto) {
     const { page = 1, limit = 20, type, status, search, ownerId, city, area } = query;
     const skip = (page - 1) * limit;

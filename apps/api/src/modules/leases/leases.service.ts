@@ -33,8 +33,15 @@ export class LeasesService {
     return tenant;
   }
 
-  async findAll(workspaceId: string, query: LeaseQueryDto) {
-    const { page = 1, limit = 20, status, tenantId, unitId, search } = query;
+  /** Owner has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async resolveOwnerIdForUser(workspaceId: string, userId: string) {
+    const owner = await this.prisma.owner.findFirst({ where: { workspaceId, userId }, select: { id: true } });
+    if (!owner) throw new NotFoundException('Owner profile not found');
+    return owner;
+  }
+
+  async findAll(workspaceId: string, query: LeaseQueryDto & { ownerId?: string }) {
+    const { page = 1, limit = 20, status, tenantId, unitId, search, ownerId } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.LeaseWhereInput = {
@@ -42,6 +49,7 @@ export class LeasesService {
       ...(status && { status: status as LeaseStatus }),
       ...(tenantId && { tenantId }),
       ...(unitId && { unitId }),
+      ...(ownerId && { unit: { property: { ownerId } } }),
       ...(search && {
         OR: [
           { tenant: { fullName: { contains: search, mode: 'insensitive' } } },

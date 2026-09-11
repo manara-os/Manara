@@ -33,7 +33,14 @@ export class LeasesController {
       const tenant = await this.leasesService.resolveTenantIdForUser(req.workspaceId, req.user.id);
       tenantId = tenant.id;
     }
-    return this.leasesService.findAll(req.workspaceId, { status, unitId, tenantId });
+    // Same gap for OWNER: unscoped, this returns every lease in the
+    // workspace, not just the leases on the owner's own properties.
+    let ownerId: string | undefined;
+    if (req.user.role === 'OWNER') {
+      const owner = await this.leasesService.resolveOwnerIdForUser(req.workspaceId, req.user.id);
+      ownerId = owner.id;
+    }
+    return this.leasesService.findAll(req.workspaceId, { status, unitId, tenantId, ownerId });
   }
 
   @Get('expiring')

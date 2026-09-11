@@ -41,7 +41,15 @@ export class PropertiesController {
   @Get()
   @Roles(UserRole.PLATFORM_ADMIN, UserRole.PM_ADMIN, UserRole.PM_OPS, UserRole.OWNER)
   @ApiOperation({ summary: 'List all properties in workspace' })
-  findAll(@CurrentUser() user: any, @Query() query: PropertyQueryDto) {
+  async findAll(@CurrentUser() user: any, @Query() query: PropertyQueryDto) {
+    // `ownerId` was a client-supplied filter with no ownership check, so an
+    // OWNER-role caller (the mobile/web owner apps) got every property in
+    // the workspace, not just their own — force it from their own record
+    // server-side instead of trusting the query string.
+    if (user.role === UserRole.OWNER) {
+      const owner = await this.propertiesService.resolveOwnerIdForUser(user.workspaceId, user.id);
+      query = { ...query, ownerId: owner.id };
+    }
     return this.propertiesService.findAll(user.workspaceId, query);
   }
 
