@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Bell, BookOpen, Lightbulb, AlertOctagon, Crown, Shield } from 'lucide-react';
+import { Bell, BookOpen, Lightbulb, AlertOctagon, Crown, Shield, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
+import { useUIStore } from '@/store/ui.store';
 import { financeApi } from '@/lib/api';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function Topbar() {
   const { user, currentWorkspace } = useAuthStore();
+  const { toggleMobileSidebar } = useUIStore();
   const role = currentWorkspace?.role as string;
   const RoleIcon = ROLE_ICON[role] ?? Shield;
   const [openMenu, setOpenMenu] = useState<null | 'notif' | 'guide'>(null);
@@ -46,23 +48,39 @@ export function Topbar() {
     : 0;
 
   return (
-    <div className="h-12 px-5 flex items-center justify-between border-b border-gray-200 bg-white sticky top-0 z-30">
-      {/* Left: workspace + role badge */}
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700">
-          <RoleIcon className="w-3 h-3 text-amber-600" />
-          {currentWorkspace?.workspace?.name ?? 'Manara OS'}
-          <span className="text-gray-400">·</span>
-          <span className="text-amber-700">{ROLE_LABEL[role] ?? role}</span>
+    <div className="h-12 px-3 md:px-5 flex items-center justify-between gap-2 border-b border-gray-200 bg-white sticky top-0 z-30">
+      {/* Left: mobile menu + workspace/role badge */}
+      <div className="flex items-center gap-2 min-w-0">
+        {/*
+          Open-only. This button lives in Topbar's own stacking context
+          (sticky + z-30), which the open drawer (fixed + z-50) paints over
+          entirely — a higher z-index on just this button can't escape that,
+          since a descendant is capped by its own stacking-context ancestor.
+          Closing is handled by the backdrop tap and the X inside the drawer
+          itself (Sidebar), both of which are naturally part of that z-50 layer.
+        */}
+        <button
+          onClick={toggleMobileSidebar}
+          className="md:hidden p-1.5 -ml-1 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+          aria-label="Open menu"
+        >
+          <Menu className="w-4.5 h-4.5" />
+        </button>
+
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-700 min-w-0">
+          <RoleIcon className="w-3 h-3 text-amber-600 flex-shrink-0" />
+          <span className="truncate max-w-[38vw] sm:max-w-none">{currentWorkspace?.workspace?.name ?? 'Manara OS'}</span>
+          <span className="text-gray-400 hidden sm:inline">·</span>
+          <span className="text-amber-700 hidden sm:inline">{ROLE_LABEL[role] ?? role}</span>
         </span>
       </div>
 
-      {/* Right: actions */}
-      <div className="flex items-center gap-1.5">
+      {/* Right: actions — low-priority items drop off below md rather than overflowing */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Product Guide */}
         <Link
           href="/feature-requests"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-xs font-medium text-gray-700 transition-colors"
+          className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-xs font-medium text-gray-700 transition-colors"
         >
           <BookOpen className="w-3.5 h-3.5 text-gray-500" />
           Product Guide
@@ -71,21 +89,21 @@ export function Topbar() {
         {/* Request Feature */}
         <Link
           href="/feature-requests"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-amber-50 hover:border-amber-200 text-xs font-medium text-gray-700 transition-colors"
+          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-amber-50 hover:border-amber-200 text-xs font-medium text-gray-700 transition-colors"
         >
           <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
           Request Feature
         </Link>
 
-        {/* Overdue */}
+        {/* Overdue — collapses to an icon-only badge below sm, since the amount at stake matters more than the label */}
         {overdueCount > 0 && (
           <Link
             href="/overdue"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 transition-colors"
             title={`AED ${overdueAmount.toLocaleString()} overdue across ${overdueCount} tenants`}
           >
             <AlertOctagon className="w-3.5 h-3.5" />
-            Rent Overdue
+            <span className="hidden sm:inline">Rent Overdue</span>
             <span className="bg-red-600 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none">
               {overdueCount}
             </span>
@@ -93,7 +111,9 @@ export function Topbar() {
         )}
 
         {/* Language switcher */}
-        <LanguageSwitcher />
+        <div className="hidden sm:block">
+          <LanguageSwitcher />
+        </div>
 
         {/* Notifications */}
         <button
@@ -101,7 +121,7 @@ export function Topbar() {
             setOpenMenu(openMenu === 'notif' ? null : 'notif');
             toast.info('Notifications panel — coming next');
           }}
-          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors relative"
+          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors relative flex-shrink-0"
           title="Notifications"
         >
           <Bell className="w-3.5 h-3.5 text-gray-500" />
