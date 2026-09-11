@@ -31,6 +31,20 @@ export class VendorsService {
     });
   }
 
+  /** Vendor has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async findMe(workspaceId: string, userId: string) {
+    const vendor = await this.prisma.vendor.findFirst({
+      where: { workspaceId, userId },
+      select: {
+        id: true, companyName: true, contactName: true, phone: true, email: true,
+        status: true, serviceCategories: true, coverageAreas: true,
+        rating: true, totalJobsCompleted: true, isApproved: true,
+      },
+    });
+    if (!vendor) throw new NotFoundException('Vendor profile not found');
+    return vendor;
+  }
+
   async findOne(workspaceId: string, id: string) {
     const vendor = await this.prisma.vendor.findFirst({
       where: { id, workspaceId },

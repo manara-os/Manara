@@ -26,6 +26,14 @@ export class VendorsController {
     return this.vendorsService.findAll(req.workspaceId, { status, category, search });
   }
 
+  // Declared ahead of ':id' — Nest matches routes in declaration order, and
+  // a dynamic ':id' would otherwise capture 'me' before this handler runs.
+  @Get('me')
+  @ApiOperation({ summary: 'Get current vendor profile (for the vendor app)' })
+  findMe(@Request() req: any) {
+    return this.vendorsService.findMe(req.workspaceId, req.user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get vendor details' })
   findOne(@Request() req: any, @Param('id') id: string) {

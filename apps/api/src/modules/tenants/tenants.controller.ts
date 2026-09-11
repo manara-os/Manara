@@ -28,6 +28,15 @@ export class TenantsController {
     });
   }
 
+  // Declared ahead of ':id' (unrestricted, unlike the PM-only routes below)
+  // — Nest matches routes in declaration order, and a dynamic ':id' would
+  // otherwise capture 'me' before this handler runs.
+  @Get('me')
+  @ApiOperation({ summary: 'Get current tenant profile (for the tenant app)' })
+  findMe(@Request() req: any) {
+    return this.tenantsService.findMe(req.workspaceId, req.user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get tenant details' })
   @Roles(UserRole.PM_ADMIN, UserRole.PM_OPS)

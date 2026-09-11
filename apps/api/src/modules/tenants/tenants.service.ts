@@ -6,6 +6,19 @@ import { UserRole } from '@prisma/client';
 export class TenantsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Tenant has a scalar `userId` FK, not a relation, so this filters the column directly. */
+  async findMe(workspaceId: string, userId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { workspaceId, userId },
+      select: {
+        id: true, fullName: true, email: true, phone: true, nationality: true,
+        kycVerified: true, screeningStatus: true,
+      },
+    });
+    if (!tenant) throw new NotFoundException('Tenant profile not found');
+    return tenant;
+  }
+
   async findAll(workspaceId: string, filters?: { kycVerified?: boolean; search?: string }) {
     return this.prisma.tenant.findMany({
       where: {
