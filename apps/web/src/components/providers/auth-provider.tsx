@@ -3,11 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
+import { roleHomePath } from '@/lib/role-routes';
 
 const PUBLIC_ROUTES = ['/auth/login', '/auth/otp', '/demo'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, hasHydrated, logout } = useAuthStore();
+  const { isAuthenticated, hasHydrated, logout, currentWorkspace } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -30,11 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.replace('/auth/login');
     }
 
-    // Auth'd users on auth pages → dashboard. /demo is public for everyone.
+    // Auth'd users on auth pages → their role's home. /demo is public for everyone.
     if (isAuthenticated && isPublic && pathname !== '/demo') {
-      router.replace('/dashboard');
+      router.replace(roleHomePath(currentWorkspace?.role));
     }
-  }, [isAuthenticated, hasHydrated, pathname, router, logout]);
+  }, [isAuthenticated, hasHydrated, pathname, router, logout, currentWorkspace]);
 
   // While hydrating, render nothing on protected routes to avoid flash of redirect
   if (!hasHydrated) {

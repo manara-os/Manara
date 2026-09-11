@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/lib/api';
+import { roleHomePath } from '@/lib/role-routes';
 import { toast } from 'sonner';
 
 type Step = 'phone' | 'otp';
@@ -77,7 +78,7 @@ function LoginForm() {
         workspaces: response.workspaces || [],
       });
       toast.success(`Welcome, ${response.user?.fullName ?? 'back'}!`);
-      router.replace('/dashboard');
+      router.replace(roleHomePath(response.workspaces?.[0]?.role));
     } catch (error: any) {
       toast.error(error?.response?.data?.message ?? 'Invalid OTP');
     } finally {

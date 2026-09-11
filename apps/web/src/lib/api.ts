@@ -148,6 +148,8 @@ export const tenantsApi = {
     api.patch(`/tenants/${id}/screening`, { status }),
   create: (data: any) => api.post('/tenants', data),
   update: (id: string, data: any) => api.patch(`/tenants/${id}`, data),
+  // For the TENANT-role app (web + mobile) — resolves from the caller's own JWT server-side.
+  getMyProfile: () => api.get('/tenants/me'),
 };
 
 export const leasesApi = {
@@ -223,6 +225,10 @@ export const ownersApi = {
   approveRenewal: (id: string) => api.post(`/owner/renewals/${id}/approve`),
   getRoi: (propertyId: string) => api.get(`/owner/roi/${propertyId}`),
   getMarketBenchmark: (unitId: string) => api.get(`/owner/market-benchmark/${unitId}`),
+  // For the OWNER-role app (web + mobile) — resolves from the caller's own JWT server-side.
+  getMyProfile: () => api.get('/owners/me'),
+  getMyPortfolio: () => api.get('/owners/me/portfolio'),
+  getMyStatement: (period?: string) => api.get('/finance/owner-soa/me', { params: period ? { period } : undefined }),
 };
 
 export const vendorsApi = {
@@ -234,11 +240,15 @@ export const vendorsApi = {
   acceptJob: (id: string) => api.patch(`/vendor/jobs/${id}/accept`),
   updateJobStatus: (id: string, data: any) => api.patch(`/vendor/jobs/${id}/status`, data),
   submitInvoice: (id: string, data: any) => api.post(`/vendor/jobs/${id}/invoice`, data),
+  // For the VENDOR-role app (web + mobile) — resolves from the caller's own JWT server-side.
+  getMyProfile: () => api.get('/vendors/me'),
 };
 
 export const notificationsApi = {
   list: (params?: any) => api.get('/notifications', { params }),
   markRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/mark-all-read'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
   getSettings: () => api.get('/notifications/settings'),
   updateSettings: (data: any) => api.patch('/notifications/settings', data),
 };
