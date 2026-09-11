@@ -2,7 +2,7 @@
   "name": "Manara OS — Property Management",
   "short_name": "Manara OS",
   "description": "The UAE-first, AI-powered property management operating system for property management companies, owners, tenants and vendors.",
-  "start_url": "/dashboard?source=pwa",
+  "start_url": "/auth/login?source=pwa",
   "id": "/dashboard",
   "scope": "/",
   "display": "standalone",
